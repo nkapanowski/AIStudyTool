@@ -1,20 +1,20 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Study Tool — Google Sign-In</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>AI Study Tool — Google Sign-In</title>
 
-  <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
 
 </head>
 <body>
-  <h1>AI Study Tool</h1>
-  <button id="googleBtn">Sign in with Google</button>
-  <button id="logoutBtn" style="display:none;">Log out</button>
-  <pre id="out"></pre>
+<h1>AI Study Tool</h1>
+<button id="googleBtn">Sign in with Google</button>
+<button id="logoutBtn" style="display:none;">Log out</button>
+<pre id="out"></pre>
 
-  <script type="module">
+<script type="module">
     import {
       auth,
       provider,
@@ -61,7 +61,7 @@
         out.textContent = "Signed out.";
       }
     });
-  </script>
+</script>
 </body>
 </html>
 
