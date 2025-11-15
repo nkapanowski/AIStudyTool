@@ -1,0 +1,45 @@
+.panel {
+    -fx-background-color: #1a1a1a;
+    -fx-background-radius: 8;
+    -fx-border-color: grey;
+    -fx-border-width: .4;
+    -fx-border-radius: 8;
+}
+
+.input {
+    -fx-background-color: #2a2a2a;
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: #aaa;
+    -fx-background-radius: 6;
+    -fx-padding: 10;
+    -fx-font-size: 13px;
+}
+
+.button {
+    -fx-background-color: #3a3a3a;
+    -fx-text-fill: white;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+.chat-area {
+    -fx-text-fill: white;
+    -fx-control-inner-background: #1a1a1a;
+    -fx-text-box-border: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-focus-color: transparent;
+    -fx-font-size: 14px;
+    -fx-background-color: #1a1a1a;
+}
+.chat-area .content { -fx-background-radius: 0; }
+
+.add-btn   { -fx-font-size: 16px; -fx-font-weight: bold; -fx-pref-width: 35; -fx-pref-height: 35; }
+.send-btn  { -fx-font-size: 16px; -fx-font-weight: bold; -fx-pref-width: 40; -fx-pref-height: 40; }
+.timer-lbl { -fx-font: bold 36 System; -fx-text-fill: white; }
+.mode-lbl  { -fx-font-size: 14px; -fx-text-fill: #aaa; }

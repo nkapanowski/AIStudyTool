@@ -9,6 +9,7 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.animation.Timeline;
 import javafx.animation.KeyFrame;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
 
 public class AIStudyTool extends Application {
@@ -16,35 +17,33 @@ public class AIStudyTool extends Application {
     private Timeline timeline;
     private int timeRemaining = 1500;
     private Label timerLabel;
-
-    public static void main(String[] args) {
-        launch(args);
-    }
+    private Label modeLabel;
 
     @Override
     public void start(Stage primaryStage) {
         BorderPane root = new BorderPane();
-        root.setStyle("-fx-background-color: #1a1a1a;");
-
+        root.setStyle("-fx-background-color: #0a0a0a;");
         VBox left = createLeftPanel();
         VBox right = createRightPanel();
-
-        BorderPane.setMargin(right, new Insets(0, 0, 0, 5));
 
         root.setLeft(left);
         root.setCenter(right);
 
-        Scene scene = new Scene(root, 900, 600);
+        Scene scene = new Scene(root, 1000, 650);
+        scene.getStylesheets().add(getClass().getResource("/css/studytool.css").toExternalForm());
+
         primaryStage.setTitle("AI Study Assistant");
         primaryStage.setScene(scene);
+        primaryStage.initStyle(StageStyle.UNIFIED);
         primaryStage.show();
     }
-    //creates the left pane
+
+    //creates the left panel
     private VBox createLeftPanel() {
-        VBox panel = new VBox(15);
-        panel.setPadding(new Insets(20, 10, 20, 20));
-        panel.setPrefWidth(300);
-        panel.setStyle("-fx-background-color: #1a1a1a;");
+        VBox panel = new VBox(20);
+        panel.setPadding(new Insets(25));
+        panel.setPrefWidth(450);
+        panel.setStyle("-fx-background-color: #0a0a0a;");
 
         VBox tasksSection = createTasksSection();
         VBox.setVgrow(tasksSection, Priority.ALWAYS);
@@ -54,130 +53,145 @@ public class AIStudyTool extends Application {
         panel.getChildren().addAll(tasksSection, timerSection);
         return panel;
     }
-    //creates task section
-    //TODO:Need to create a array that stores tasks that the user inputs/ add delete buttons need to get rid of tasks
+
+    // @TODO add a array that takes user input and adds new task item that can be added or deleated
     private VBox createTasksSection() {
-        VBox section = new VBox(10);
-        section.setPadding(new Insets(15));
-        section.setStyle("-fx-background-color: #2d2d2d; -fx-border-color: #444; -fx-border-radius: 5; -fx-background-radius: 5;");
+        VBox section = new VBox(15);
+        section.setPadding(new Insets(20));
+        section.getStyleClass().add("panel");
+        VBox.setVgrow(section, Priority.ALWAYS);
 
         Label title = new Label("Tasks");
-        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: white;");
+        title.getStyleClass().add("title");
+
+        HBox inputBox = new HBox(10);
+        inputBox.setAlignment(Pos.CENTER_LEFT);
 
         TextField taskInput = new TextField();
-        taskInput.setPromptText("Add a task...");
-        taskInput.setStyle("-fx-background-color: #1a1a1a; -fx-text-fill: white; -fx-prompt-text-fill: #888;");
+        taskInput.setPromptText("New Task...");
+        taskInput.getStyleClass().add("input");
+        HBox.setHgrow(taskInput, Priority.ALWAYS);
 
-        Button addButton = new Button("Add Task");
-        addButton.setStyle("-fx-background-color: #444; -fx-text-fill: white;");
+        Button addButton = new Button("+");
+        addButton.getStyleClass().addAll("button", "add-btn");
 
-        VBox taskList = new VBox(10);
-
-        section.getChildren().addAll(title, taskInput, addButton, taskList);
+        inputBox.getChildren().addAll(taskInput, addButton);
+        section.getChildren().addAll(title, inputBox);
         return section;
     }
-    //creates timer section
+
+    //creates the timer
     private VBox createTimerSection() {
-        VBox section = new VBox(10);
-        section.setPadding(new Insets(15));
+        VBox section = new VBox(5);
+        section.setPadding(new Insets(25));
         section.setAlignment(Pos.CENTER);
-        section.setStyle("-fx-background-color: #2d2d2d; -fx-border-color: #444; -fx-border-radius: 5; -fx-background-radius: 5;");
+        section.getStyleClass().add("panel");
 
         timerLabel = new Label("25:00");
-        timerLabel.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: white;");
+        timerLabel.getStyleClass().add("timer-lbl");
 
-        Label modeLabel = new Label("Study");
-        modeLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #ccc;");
+        modeLabel = new Label("Study");
+        modeLabel.getStyleClass().add("mode-lbl");
 
-        HBox buttons = new HBox(10);
+        HBox buttons = new HBox(15);
         buttons.setAlignment(Pos.CENTER);
 
-        Button startButton = new Button("Start");
-        startButton.setStyle("-fx-background-color: #444; -fx-text-fill: white;");
-        startButton.setOnAction(e -> startTimer());
+        Button studyButton = new Button("Study");
+        studyButton.getStyleClass().add("button");
+        studyButton.setOnAction(e -> startTimer());
 
-        Button stopButton = new Button("Stop");
-        stopButton.setStyle("-fx-background-color: #444; -fx-text-fill: white;");
-        stopButton.setOnAction(e -> stopTimer());
+        Button breakButton = new Button("Break");
+        breakButton.getStyleClass().add("button");
+        breakButton.setOnAction(e -> startBreak());
 
-        buttons.getChildren().addAll(startButton, stopButton);
-
+        buttons.getChildren().addAll(studyButton, breakButton);
         section.getChildren().addAll(timerLabel, modeLabel, buttons);
         return section;
     }
-    //sets timer to 25 minutes updates the ui if the timer goes to zero timer is set to 5 minutes.
-    //TODO: need to make the modelabel update when changing from 25 minutes to 5 minutes.
+
+    //starts the timer
     private void startTimer() {
-        if (timeline != null) {
-            timeline.stop();
-        }
-
+        if (timeline != null) timeline.stop();
         timeRemaining = 1500;
-
+        modeLabel.setText("Study");
         timeline = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
             timeRemaining--;
-
-            int minutes = timeRemaining / 60;
-            int seconds = timeRemaining % 60;
-
-            timerLabel.setText(String.format("%02d:%02d", minutes, seconds));
-
+            timerLabel.setText(String.format("%02d:%02d", timeRemaining / 60, timeRemaining % 60));
             if (timeRemaining <= 0) {
-                timeRemaining = 300;
-                timeline = new Timeline(new KeyFrame(Duration.seconds(1), _ -> {
-                    int minutes2 = timeRemaining / 60;
-                    int seconds2 = timeRemaining % 60;
-                    timeRemaining--;
-                    timerLabel.setText(String.format("%02d:%02d", minutes2, seconds2));
-                }));
+                timeline.stop();
+                startBreak();
             }
         }));
-
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.play();
     }
 
-    private void stopTimer() {
-        if (timeline != null) {
-            timeline.stop();
-        }
-        timeRemaining = 1500;
-        timerLabel.setText("25:00");
+    //starts the break timer
+    private void startBreak() {
+        if (timeline != null) timeline.stop();
+        timeRemaining = 300;
+        modeLabel.setText("Break");
+        timeline = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+            timeRemaining--;
+            timerLabel.setText(String.format("%02d:%02d", timeRemaining / 60, timeRemaining % 60));
+            if (timeRemaining <= 0) {
+                timeline.stop();
+                timeRemaining = 1500;
+                timerLabel.setText("25:00");
+                modeLabel.setText("Study");
+            }
+        }));
+        timeline.setCycleCount(Timeline.INDEFINITE);
+        timeline.play();
     }
 
-    //Creates the right panel with text input and output
-    //TODO: need to create text bubbles for response and for user input showcasing the output to the screen
+    //@TODO need to add a mode selector for flash card, Q&A, and Learn.
+    //creates the right panel with input, send button, and output box
     private VBox createRightPanel() {
-        VBox panel = new VBox(15);
-        panel.setPadding(new Insets(20));
-        panel.setStyle("-fx-background-color: #1a1a1a;");
+        VBox panel = new VBox(20);
+        panel.setPadding(new Insets(25, 25, 25, 3));
+        panel.setStyle("-fx-background-color: #0a0a0a;");
+        VBox.setVgrow(panel, Priority.ALWAYS);
 
-        VBox chatBox = new VBox(10);
-        chatBox.setPadding(new Insets(15));
-        chatBox.setStyle("-fx-background-color: #2d2d2d; -fx-border-color: #444; -fx-border-radius: 5; -fx-background-radius: 5;");
+        VBox chatBox = new VBox(15);
+        chatBox.setPadding(new Insets(10));
+        chatBox.getStyleClass().add("panel");
+        VBox.setVgrow(chatBox, Priority.ALWAYS);
+
+        HBox header = new HBox(15);
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        Label chatTitle = new Label("AI Study Assistant");
+        chatTitle.setStyle("-fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold;");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        header.getChildren().addAll(chatTitle, spacer);
 
         TextArea chatArea = new TextArea();
         chatArea.setEditable(false);
         chatArea.setWrapText(true);
-        chatArea.setStyle("-fx-control-inner-background: #1a1a1a; -fx-text-fill: white;");
+        chatArea.getStyleClass().add("chat-area");
         VBox.setVgrow(chatArea, Priority.ALWAYS);
 
-        chatBox.getChildren().add(chatArea);
-        VBox.setVgrow(chatBox, Priority.ALWAYS);
+        chatBox.getChildren().addAll(header, chatArea);
 
-        VBox inputBox = new VBox(10);
-        inputBox.setPadding(new Insets(15));
-        inputBox.setStyle("-fx-background-color: #2d2d2d; -fx-border-color: #444; -fx-border-radius: 5; -fx-background-radius: 5;");
+        HBox inputBox = new HBox(10);
+        inputBox.setAlignment(Pos.CENTER);
+        inputBox.setPadding(new Insets(12));
+        inputBox.getStyleClass().add("panel");
 
         TextField questionInput = new TextField();
-        questionInput.setPromptText("...");
-        questionInput.setStyle("-fx-background-color: #1a1a1a; -fx-text-fill: white; -fx-prompt-text-fill: #888;");
+        questionInput.setPromptText("");
+        questionInput.getStyleClass().add("input");
+        questionInput.setPrefHeight(40);
+        HBox.setHgrow(questionInput, Priority.ALWAYS);
 
-        Button sendButton = new Button("Send");
-        sendButton.setStyle("-fx-background-color: #444; -fx-text-fill: white;");
+        Button sendButton = new Button("↑");
+        sendButton.getStyleClass().addAll("button", "send-btn");
 
         inputBox.getChildren().addAll(questionInput, sendButton);
-
         panel.getChildren().addAll(chatBox, inputBox);
         return panel;
     }

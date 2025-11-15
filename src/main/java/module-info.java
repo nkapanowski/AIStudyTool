@@ -10,6 +10,7 @@ module org.example.aistudytool {
     requires org.kordamp.bootstrapfx.core;
     requires eu.hansolo.tilesfx;
     requires com.almasb.fxgl.all;
+    requires java.desktop;
 
     opens org.aistudytool to javafx.fxml;
     exports org.aistudytool;
