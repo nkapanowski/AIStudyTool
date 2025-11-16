@@ -39,6 +39,74 @@
 }
 .chat-area .content { -fx-background-radius: 0; }
 
+.task-item {
+    -fx-background-color: #2a2a2a;
+    -fx-background-radius: 6;
+    -fx-border-color: #3a3a3a;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+}
+
+.task-label {
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+}
+
+.delete-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #888;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-min-width: 30px;
+    -fx-min-height: 30px;
+    -fx-cursor: hand;
+    -fx-translate-y: -2px;
+}
+
+.delete-button:hover {
+    -fx-text-fill: #ff4444;
+}
+
+.scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane > .corner {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane > .scroll-bar:vertical {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane > .scroll-bar:vertical > .track {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane > .scroll-bar:vertical > .track-background {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane > .scroll-bar:vertical > .thumb {
+    -fx-background-color: rgba(255, 255, 255, 0.2);
+    -fx-background-radius: 2;
+}
+
+.scroll-pane > .scroll-bar:vertical > .thumb:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.3);
+}
+
+.scroll-pane > .scroll-bar:vertical > .increment-button,
+.scroll-pane > .scroll-bar:vertical > .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-pref-height: 0;
+}
+
 .add-btn   { -fx-font-size: 16px; -fx-font-weight: bold; -fx-pref-width: 35; -fx-pref-height: 35; }
 .send-btn  { -fx-font-size: 16px; -fx-font-weight: bold; -fx-pref-width: 40; -fx-pref-height: 40; }
 .timer-lbl { -fx-font: bold 36 System; -fx-text-fill: white; }

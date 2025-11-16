@@ -12,8 +12,12 @@ import javafx.animation.KeyFrame;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
 
-public class AIStudyTool extends Application {
+import java.util.ArrayList;
+import java.util.List;
 
+public class AIStudyTool extends Application {
+    private VBox taskListContainer;
+    private List<HBox> taskItems;
     private Timeline timeline;
     private int timeRemaining = 1500;
     private Label timerLabel;
@@ -54,7 +58,7 @@ public class AIStudyTool extends Application {
         return panel;
     }
 
-    // @TODO add a array that takes user input and adds new task item that can be added or deleated
+    //adds tasks through user input stores them in a list
     private VBox createTasksSection() {
         VBox section = new VBox(15);
         section.setPadding(new Insets(20));
@@ -75,9 +79,55 @@ public class AIStudyTool extends Application {
         Button addButton = new Button("+");
         addButton.getStyleClass().addAll("button", "add-btn");
 
-        inputBox.getChildren().addAll(taskInput, addButton);
-        section.getChildren().addAll(title, inputBox);
+        taskItems = new ArrayList<>();
+        taskListContainer = new VBox(10);
+        taskListContainer.setPadding(new Insets(10, 0, 0, 0));
+        addButton.setOnAction(e -> addTask(taskInput));
+        taskInput.setOnAction(e -> addTask(taskInput));
+
+        inputBox.getChildren().addAll(taskInput, addButton);  // Add this line!
+
+        ScrollPane scrollPane = new ScrollPane(taskListContainer);
+        scrollPane.setFitToWidth(true);
+        scrollPane.getStyleClass().add("scroll-pane");
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+
+        section.getChildren().addAll(title, inputBox, scrollPane);
         return section;
+    }
+    //add and delete task items.
+    //@TODO make the first task the user entered the current task and when the timer ends the next available task becomes the current task
+    private void addTask (TextField taskInput) {
+        String taskText = taskInput.getText().trim();
+
+        if (!taskText.isEmpty()) {
+            HBox taskItem = new HBox(10);
+            taskItem.setAlignment(Pos.CENTER_LEFT);
+            taskItem.setPadding(new Insets(10));
+            taskItem.getStyleClass().add("task-item");
+
+            Label taskLabel = new Label(taskText);
+            taskLabel.getStyleClass().add("task-label");
+            taskLabel.setWrapText(true);
+            taskLabel.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(taskLabel, Priority.ALWAYS);
+
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+
+            Button deleteButton = new Button("x");
+            deleteButton.getStyleClass().add("delete-button");
+            deleteButton.setOnAction(e -> {
+                taskListContainer.getChildren().remove(taskItem);
+                taskItems.remove(taskItem);
+            });
+
+            taskItem.getChildren().addAll(taskLabel, spacer, deleteButton);
+            taskItems.add(taskItem);
+            taskListContainer.getChildren().add(taskItem);
+
+            taskInput.clear();
+        }
     }
 
     //creates the timer
