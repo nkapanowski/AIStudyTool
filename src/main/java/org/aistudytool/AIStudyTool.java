@@ -1,5 +1,4 @@
 package org.aistudytool;
-
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -7,19 +6,12 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import javafx.animation.Timeline;
-import javafx.animation.KeyFrame;
 import javafx.stage.StageStyle;
-import javafx.util.Duration;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class AIStudyTool extends Application {
     private VBox taskListContainer;
-    private List<HBox> taskItems;
-    private Timeline timeline;
-    private int timeRemaining = 1500;
+    private TaskManager taskManager;
+    private PomodoroTimer pomodoroTimer;
     private Label timerLabel;
     private Label modeLabel;
 
@@ -79,13 +71,15 @@ public class AIStudyTool extends Application {
         Button addButton = new Button("+");
         addButton.getStyleClass().addAll("button", "add-btn");
 
-        taskItems = new ArrayList<>();
         taskListContainer = new VBox(10);
         taskListContainer.setPadding(new Insets(10, 0, 0, 0));
-        addButton.setOnAction(e -> addTask(taskInput));
-        taskInput.setOnAction(e -> addTask(taskInput));
 
-        inputBox.getChildren().addAll(taskInput, addButton);  // Add this line!
+        taskManager = new TaskManager(taskListContainer);
+
+        addButton.setOnAction(e -> taskManager.addTask(taskInput));
+        taskInput.setOnAction(e -> taskManager.addTask(taskInput));
+
+        inputBox.getChildren().addAll(taskInput, addButton);
 
         ScrollPane scrollPane = new ScrollPane(taskListContainer);
         scrollPane.setFitToWidth(true);
@@ -94,40 +88,6 @@ public class AIStudyTool extends Application {
 
         section.getChildren().addAll(title, inputBox, scrollPane);
         return section;
-    }
-    //add and delete task items.
-    //@TODO make the first task the user entered the current task and when the timer ends the next available task becomes the current task
-    private void addTask (TextField taskInput) {
-        String taskText = taskInput.getText().trim();
-
-        if (!taskText.isEmpty()) {
-            HBox taskItem = new HBox(10);
-            taskItem.setAlignment(Pos.CENTER_LEFT);
-            taskItem.setPadding(new Insets(10));
-            taskItem.getStyleClass().add("task-item");
-
-            Label taskLabel = new Label(taskText);
-            taskLabel.getStyleClass().add("task-label");
-            taskLabel.setWrapText(true);
-            taskLabel.setMaxWidth(Double.MAX_VALUE);
-            HBox.setHgrow(taskLabel, Priority.ALWAYS);
-
-            Region spacer = new Region();
-            HBox.setHgrow(spacer, Priority.ALWAYS);
-
-            Button deleteButton = new Button("x");
-            deleteButton.getStyleClass().add("delete-button");
-            deleteButton.setOnAction(e -> {
-                taskListContainer.getChildren().remove(taskItem);
-                taskItems.remove(taskItem);
-            });
-
-            taskItem.getChildren().addAll(taskLabel, spacer, deleteButton);
-            taskItems.add(taskItem);
-            taskListContainer.getChildren().add(taskItem);
-
-            taskInput.clear();
-        }
     }
 
     //creates the timer
@@ -143,56 +103,22 @@ public class AIStudyTool extends Application {
         modeLabel = new Label("Study");
         modeLabel.getStyleClass().add("mode-lbl");
 
+        pomodoroTimer = new PomodoroTimer(timerLabel, modeLabel);
+
         HBox buttons = new HBox(15);
         buttons.setAlignment(Pos.CENTER);
 
         Button studyButton = new Button("Study");
         studyButton.getStyleClass().add("button");
-        studyButton.setOnAction(e -> startTimer());
+        studyButton.setOnAction(e -> pomodoroTimer.startTimer());
 
         Button breakButton = new Button("Break");
         breakButton.getStyleClass().add("button");
-        breakButton.setOnAction(e -> startBreak());
+        breakButton.setOnAction(e -> pomodoroTimer.startBreak());
 
         buttons.getChildren().addAll(studyButton, breakButton);
         section.getChildren().addAll(timerLabel, modeLabel, buttons);
         return section;
-    }
-
-    //starts the timer
-    private void startTimer() {
-        if (timeline != null) timeline.stop();
-        timeRemaining = 1500;
-        modeLabel.setText("Study");
-        timeline = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
-            timeRemaining--;
-            timerLabel.setText(String.format("%02d:%02d", timeRemaining / 60, timeRemaining % 60));
-            if (timeRemaining <= 0) {
-                timeline.stop();
-                startBreak();
-            }
-        }));
-        timeline.setCycleCount(Timeline.INDEFINITE);
-        timeline.play();
-    }
-
-    //starts the break timer
-    private void startBreak() {
-        if (timeline != null) timeline.stop();
-        timeRemaining = 300;
-        modeLabel.setText("Break");
-        timeline = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
-            timeRemaining--;
-            timerLabel.setText(String.format("%02d:%02d", timeRemaining / 60, timeRemaining % 60));
-            if (timeRemaining <= 0) {
-                timeline.stop();
-                timeRemaining = 1500;
-                timerLabel.setText("25:00");
-                modeLabel.setText("Study");
-            }
-        }));
-        timeline.setCycleCount(Timeline.INDEFINITE);
-        timeline.play();
     }
 
     //@TODO need to add a mode selector for flash card, Q&A, and Learn.
