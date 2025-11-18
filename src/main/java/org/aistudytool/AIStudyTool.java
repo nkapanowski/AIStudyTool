@@ -26,7 +26,8 @@ public class AIStudyTool extends Application {
         root.setCenter(right);
 
         Scene scene = new Scene(root, 1000, 650);
-        scene.getStylesheets().add(getClass().getResource("/css/studytool.css").toExternalForm());
+        String css = this.getClass().getResource("/CSS/studytool.css").toExternalForm();
+        scene.getStylesheets().add(css);
 
         primaryStage.setTitle("AI Study Assistant");
         primaryStage.setScene(scene);
