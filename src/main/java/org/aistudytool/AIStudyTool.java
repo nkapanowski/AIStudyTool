@@ -59,6 +59,8 @@ public void start(Stage primaryStage) {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        String css = this.getClass().getResource("/CSS/studytool.css").toExternalForm();
+        scene.getStylesheets().add(css);
 
         primaryStage.setTitle("AI Study Assistant");
         primaryStage.setScene(scene);
