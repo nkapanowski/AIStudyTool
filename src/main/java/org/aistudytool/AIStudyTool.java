@@ -14,11 +14,67 @@ public class AIStudyTool extends Application {
     private PomodoroTimer pomodoroTimer;
     private Label timerLabel;
     private Label modeLabel;
+    private User currentUser;
+    private UserRepo userRepo;
+
+    public AIStudyTool() {
+        // Default constructor for initial launch
+    }
+    
+    public AIStudyTool(User user) {
+        this.currentUser = user;
+        this.userRepo = new UserRepo();
+    }
 
     @Override
-    public void start(Stage primaryStage) {
+public void start(Stage primaryStage) {
+        if (currentUser == null) {
+            LoginView loginView = new LoginView(primaryStage);
+            primaryStage.setScene(loginView.createLoginScene());
+            primaryStage.setTitle("AI Study Tool - Login");
+            primaryStage.show();
+            return;
+        }
+
+    try {
+        System.out.println("=== Creating UI ===");
+        
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: #0a0a0a;");
+        VBox left = createLeftPanel();
+        VBox right = createRightPanel();
+        
+        System.out.println("Left panel: " + left);
+        System.out.println("Right panel: " + right);
+        
+        root.setLeft(left);
+        root.setCenter(right);
+
+        Scene scene = new Scene(root, 1000, 650);
+        
+        try {
+            String css = getClass().getResource("/CSS/studytool.css").toExternalForm();
+            scene.getStylesheets().add(css);
+            System.out.println("CSS loaded: " + css);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        primaryStage.setTitle("AI Study Assistant");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+        
+        System.out.println("=== UI Created Successfully ===");
+        
+    } catch (Exception e) {
+        System.out.println("ERROR IN START METHOD:");
+        e.printStackTrace();
+    }
+}
+
+    /*@Override
+    public void start(Stage primaryStage) {
+        BorderPane root = new BorderPane();
         VBox left = createLeftPanel();
         VBox right = createRightPanel();
 
@@ -26,20 +82,30 @@ public class AIStudyTool extends Application {
         root.setCenter(right);
 
         Scene scene = new Scene(root, 1000, 650);
-        scene.getStylesheets().add(getClass().getResource("/css/studytool.css").toExternalForm());
 
-        primaryStage.setTitle("AI Study Assistant");
-        primaryStage.setScene(scene);
-        primaryStage.initStyle(StageStyle.UNIFIED);
-        primaryStage.show();
-    }
+        try {
+                String css = getClass().getResource("/CSS/studytool.css").toExternalForm();
+                System.out.println("CSS URL = " + css);
+                if (css == null) throw new IllegalStateException("CSS missing!");
+                scene.getStylesheets().add(css);
+            } catch (Exception e) {
+                System.err.println("CSS FAILED:");
+                e.printStackTrace();
+            }
+
+            root.setStyle("-fx-background-color: #ff00ff;");  // DARK GRAY
+
+            primaryStage.setTitle("AI Study Assistant");
+            primaryStage.setScene(scene);
+            primaryStage.initStyle(StageStyle.UNIFIED);
+            primaryStage.show();
+        }*/
 
     //creates the left panel
     private VBox createLeftPanel() {
         VBox panel = new VBox(20);
         panel.setPadding(new Insets(25));
         panel.setPrefWidth(450);
-        panel.setStyle("-fx-background-color: #0a0a0a;");
 
         VBox tasksSection = createTasksSection();
         VBox.setVgrow(tasksSection, Priority.ALWAYS);
@@ -74,12 +140,7 @@ public class AIStudyTool extends Application {
         taskListContainer = new VBox(10);
         taskListContainer.setPadding(new Insets(10, 0, 0, 0));
 
-        taskManager = new TaskManager(taskListContainer);
-
-        addButton.setOnAction(e -> taskManager.addTask(taskInput));
-        taskInput.setOnAction(e -> taskManager.addTask(taskInput));
-
-        inputBox.getChildren().addAll(taskInput, addButton);
+        inputBox.getChildren().addAll(taskInput, addButton); 
 
         ScrollPane scrollPane = new ScrollPane(taskListContainer);
         scrollPane.setFitToWidth(true);
@@ -126,7 +187,6 @@ public class AIStudyTool extends Application {
     private VBox createRightPanel() {
         VBox panel = new VBox(20);
         panel.setPadding(new Insets(25, 25, 25, 3));
-        panel.setStyle("-fx-background-color: #0a0a0a;");
         VBox.setVgrow(panel, Priority.ALWAYS);
 
         VBox chatBox = new VBox(15);
