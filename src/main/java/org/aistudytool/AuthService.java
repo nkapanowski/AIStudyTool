@@ -18,11 +18,12 @@ import org.apache.hc.core5.http.io.entity.EntityUtils;
 import java.util.concurrent.CompletableFuture;
 
 public class AuthService {
-    private static final String FIREBASE_API_KEY = System.getenv("FIREBASE_API_KEY");
+    private static final String FIREBASE_API_KEY = "THE_FIREBASE_API_KEY_HERE";
+    private static final String GOOGLE_CLIENT_ID = "THE_GOOGLE_CLIENT_ID_HERE";
     private static final String AUTH_DOMAIN = "aistudytool-d7a8a.firebaseapp.com";
     private static final String SIGN_IN_URL = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + FIREBASE_API_KEY;
     private static final String SIGN_UP_URL = "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=" + FIREBASE_API_KEY;
-    
+
     private Gson gson = new Gson();
     private UserRepo userRepo = new UserRepo();
     
@@ -119,7 +120,7 @@ public class AuthService {
         webView.setPrefSize(500, 600);
         
         String authUrl = "https://accounts.google.com/o/oauth2/v2/auth?" +
-               "client_id=963953246105-od3j9uualt0m7j9ibevidd7c72gc8ke2.apps.googleusercontent.com&" +
+               "client_id=" + GOOGLE_CLIENT_ID + "&" +
                "redirect_uri=https://" + AUTH_DOMAIN + "/__/auth/handler&" +
                "response_type=id_token&" +
                "scope=openid%20email%20profile&" +
@@ -191,10 +192,9 @@ private void verifyGoogleToken(String idToken, AuthCallback callback) {
             }
         }
     }
-    
-    // Inner interface - no separate file needed
+
     public interface AuthCallback {
         void onSuccess(User user);
-        void onFailure(String error);
+        void onFailure(String errorMessage);
     }
 }
