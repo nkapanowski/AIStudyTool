@@ -14,38 +14,35 @@ public class AIStudyTool extends Application {
     private PomodoroTimer pomodoroTimer;
     private Label timerLabel;
     private Label modeLabel;
-    private User currentUser;
+   private static User currentUser;
     private UserRepo userRepo;
 
+    public static void setCurrentUser(User user) {
+    currentUser = user;
+}
+
     public AIStudyTool() {
-        // Default constructor for initial launch
-    }
-    
-    public AIStudyTool(User user) {
-        this.currentUser = user;
         this.userRepo = new UserRepo();
     }
 
     @Override
-public void start(Stage primaryStage) {
-        if (currentUser == null) {
-            LoginView loginView = new LoginView(primaryStage);
-            primaryStage.setScene(loginView.createLoginScene());
-            primaryStage.setTitle("AI Study Tool - Login");
-            primaryStage.show();
-            return;
-        }
+    public void start(Stage primaryStage) {
+    // Check if user is logged in
+    if (currentUser == null) {
+        System.err.println("ERROR: No user logged in!");
+        return;
+    }
+    
+    // Initialize TaskManager with current user
+    this.taskManager = new TaskManager(currentUser.getUid());
 
     try {
-        System.out.println("=== Creating UI ===");
+        System.out.println("=== Creating UI for user: " + currentUser.getEmail() + " ===");
         
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: #0a0a0a;");
         VBox left = createLeftPanel();
         VBox right = createRightPanel();
-        
-        System.out.println("Left panel: " + left);
-        System.out.println("Right panel: " + right);
         
         root.setLeft(left);
         root.setCenter(right);
@@ -59,8 +56,6 @@ public void start(Stage primaryStage) {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        String css = this.getClass().getResource("/CSS/studytool.css").toExternalForm();
-        scene.getStylesheets().add(css);
 
         primaryStage.setTitle("AI Study Assistant");
         primaryStage.setScene(scene);
@@ -73,35 +68,6 @@ public void start(Stage primaryStage) {
         e.printStackTrace();
     }
 }
-
-    /*@Override
-    public void start(Stage primaryStage) {
-        BorderPane root = new BorderPane();
-        VBox left = createLeftPanel();
-        VBox right = createRightPanel();
-
-        root.setLeft(left);
-        root.setCenter(right);
-
-        Scene scene = new Scene(root, 1000, 650);
-
-        try {
-                String css = getClass().getResource("/CSS/studytool.css").toExternalForm();
-                System.out.println("CSS URL = " + css);
-                if (css == null) throw new IllegalStateException("CSS missing!");
-                scene.getStylesheets().add(css);
-            } catch (Exception e) {
-                System.err.println("CSS FAILED:");
-                e.printStackTrace();
-            }
-
-            root.setStyle("-fx-background-color: #ff00ff;");  // DARK GRAY
-
-            primaryStage.setTitle("AI Study Assistant");
-            primaryStage.setScene(scene);
-            primaryStage.initStyle(StageStyle.UNIFIED);
-            primaryStage.show();
-        }*/
 
     //creates the left panel
     private VBox createLeftPanel() {
@@ -142,6 +108,12 @@ public void start(Stage primaryStage) {
         taskListContainer = new VBox(10);
         taskListContainer.setPadding(new Insets(10, 0, 0, 0));
 
+        taskManager.setTaskListContainer(taskListContainer);
+        taskManager.loadTasksToUI(); // Load existing tasks from database
+    
+        addButton.setOnAction(e -> taskManager.addTask(taskInput));
+        taskInput.setOnAction(e -> taskManager.addTask(taskInput));
+
         inputBox.getChildren().addAll(taskInput, addButton); 
 
         ScrollPane scrollPane = new ScrollPane(taskListContainer);
@@ -149,9 +121,9 @@ public void start(Stage primaryStage) {
         scrollPane.getStyleClass().add("scroll-pane");
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
 
-        section.getChildren().addAll(title, inputBox, scrollPane);
-        return section;
-    }
+    section.getChildren().addAll(title, inputBox, scrollPane);
+    return section;
+}
 
     //creates the timer
     private VBox createTimerSection() {
@@ -184,7 +156,6 @@ public void start(Stage primaryStage) {
         return section;
     }
 
-    //@TODO need to add a mode selector for flash card, Q&A, and Learn.
     //creates the right panel with input, send button, and output box
     private VBox createRightPanel() {
         VBox panel = new VBox(20);
@@ -205,32 +176,134 @@ public void start(Stage primaryStage) {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        header.getChildren().addAll(chatTitle, spacer);
+            // ADD MODE SELECTOR
+    HBox modeSelector = new HBox(10);
+    modeSelector.setAlignment(Pos.CENTER_RIGHT);
+    
+    ToggleGroup modeGroup = new ToggleGroup();
+    
+    ToggleButton learnMode = new ToggleButton("Learn");
+    learnMode.setToggleGroup(modeGroup);
+    learnMode.setSelected(true);
+    learnMode.getStyleClass().add("mode-button");
+    
+    ToggleButton qaMode = new ToggleButton("Q&A");
+    qaMode.setToggleGroup(modeGroup);
+    qaMode.getStyleClass().add("mode-button");
+    
+    ToggleButton flashcardMode = new ToggleButton("Flashcard");
+    flashcardMode.setToggleGroup(modeGroup);
+    flashcardMode.getStyleClass().add("mode-button");
+    
+    modeSelector.getChildren().addAll(learnMode, qaMode, flashcardMode);
 
-        TextArea chatArea = new TextArea();
-        chatArea.setEditable(false);
-        chatArea.setWrapText(true);
-        chatArea.getStyleClass().add("chat-area");
-        VBox.setVgrow(chatArea, Priority.ALWAYS);
+    header.getChildren().addAll(chatTitle, spacer, modeSelector);
 
-        chatBox.getChildren().addAll(header, chatArea);
+    TextArea chatArea = new TextArea();
+    chatArea.setEditable(false);
+    chatArea.setWrapText(true);
+    chatArea.getStyleClass().add("chat-area");
+    VBox.setVgrow(chatArea, Priority.ALWAYS);
 
-        HBox inputBox = new HBox(10);
-        inputBox.setAlignment(Pos.CENTER);
-        inputBox.setPadding(new Insets(12));
-        inputBox.getStyleClass().add("panel");
+    chatBox.getChildren().addAll(header, chatArea);
 
-        TextField questionInput = new TextField();
-        questionInput.setPromptText("");
-        questionInput.getStyleClass().add("input");
-        questionInput.setPrefHeight(40);
-        HBox.setHgrow(questionInput, Priority.ALWAYS);
+    HBox inputBox = new HBox(10);
+    inputBox.setAlignment(Pos.CENTER);
+    inputBox.setPadding(new Insets(12));
+    inputBox.getStyleClass().add("panel");
 
-        Button sendButton = new Button("↑");
-        sendButton.getStyleClass().addAll("button", "send-btn");
+    TextField questionInput = new TextField();
+    questionInput.setPromptText("Ask me anything about your studies...");
+    questionInput.getStyleClass().add("input");
+    questionInput.setPrefHeight(40);
+    HBox.setHgrow(questionInput, Priority.ALWAYS);
 
-        inputBox.getChildren().addAll(questionInput, sendButton);
-        panel.getChildren().addAll(chatBox, inputBox);
-        return panel;
+    Button sendButton = new Button("↑");
+    sendButton.getStyleClass().addAll("button", "send-btn");
+
+    // AI SERVICE
+    AIService aiService = new AIService();
+
+    // Send button action with mode detection
+    sendButton.setOnAction(e -> {
+        String question = questionInput.getText().trim();
+        if (!question.isEmpty()) {
+            chatArea.appendText("You: " + question + "\n\n");
+            questionInput.clear();
+            sendButton.setDisable(true);
+            
+            // Get selected mode
+            String mode = ((ToggleButton) modeGroup.getSelectedToggle()).getText();
+            String prompt = buildPrompt(question, mode);
+            
+            aiService.askQuestion(prompt, new AIService.AICallback() {
+    @Override
+    public void onSuccess(String response) {
+        chatArea.appendText("AI (" + mode + "): " + response + "\n\n");
+        chatArea.appendText("─────────────────────────\n\n");
+        
+        // Auto-save flashcard if in Flashcard mode
+        if (mode.equals("Flashcard")) {
+            parseAndSaveFlashcard(response, question);
+        }
+        
+        sendButton.setDisable(false);
+        chatArea.setScrollTop(Double.MAX_VALUE);
     }
+    
+    @Override
+    public void onFailure(String error) {
+        chatArea.appendText("Error: " + error + "\n\n");
+        sendButton.setDisable(false);
+    }
+});
+        }
+    });
+
+    questionInput.setOnAction(e -> sendButton.fire());
+
+    inputBox.getChildren().addAll(questionInput, sendButton);
+    panel.getChildren().addAll(chatBox, inputBox);
+    return panel;
+}
+
+private void parseAndSaveFlashcard(String response, String topic) {
+    try {
+        String[] parts = response.split("\n");
+        String question = "";
+        String answer = "";
+        
+        for (String line : parts) {
+            if (line.trim().startsWith("Q:")) {
+                question = line.substring(2).trim();
+            } else if (line.trim().startsWith("A:")) {
+                answer = line.substring(2).trim();
+            }
+        }
+        
+        if (!question.isEmpty() && !answer.isEmpty()) {
+            taskManager.addFlashcard(question, answer); // Use taskManager instead
+            System.out.println("✓ Flashcard saved successfully!");
+        }
+    } catch (Exception e) {
+        System.out.println("Error saving flashcard: " + e.getMessage());
+    }
+}
+
+// ADD THIS HELPER METHOD
+private String buildPrompt(String question, String mode) {
+    switch (mode) {
+        case "Learn":
+            return "Explain this concept in detail for a student: " + question;
+        case "Q&A":
+            return "Answer this question directly and concisely: " + question;
+        case "Flashcard":
+            return "Create a flashcard for studying. Format your response EXACTLY like this:\n\n" +
+                   "Q: [Write a clear question about: " + question + "]\n" +
+                   "A: [Write a concise answer]\n\n" +
+                   "Keep it simple and focused on one concept.";
+        default:
+            return question;
+    }
+}
 }

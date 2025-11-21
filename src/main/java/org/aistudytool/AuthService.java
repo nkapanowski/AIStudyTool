@@ -15,17 +15,75 @@ import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 
+import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 
 public class AuthService {
-    private static final String FIREBASE_API_KEY = "THE_FIREBASE_API_KEY_HERE";
-    private static final String GOOGLE_CLIENT_ID = "THE_GOOGLE_CLIENT_ID_HERE";
+    private static final String FIREBASE_API_KEY = "FIREBASEKEY";
+    private static final String GOOGLE_CLIENT_ID = "GOOGLEKEY";
+    private static final String CLAUDE_API_KEY = "CLAUDEKEY";       
     private static final String AUTH_DOMAIN = "aistudytool-d7a8a.firebaseapp.com";
     private static final String SIGN_IN_URL = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + FIREBASE_API_KEY;
     private static final String SIGN_UP_URL = "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=" + FIREBASE_API_KEY;
+    private static final String SESSION_FILE = "session.properties";
+
 
     private Gson gson = new Gson();
     private UserRepo userRepo = new UserRepo();
+
+    public static void saveSession(User user) {
+    Properties props = new Properties();
+    props.setProperty("userId", user.getUid());
+    props.setProperty("email", user.getEmail());
+    props.setProperty("displayName", user.getDisplayName());
+    
+    try (FileOutputStream out = new FileOutputStream(SESSION_FILE)) {
+        props.store(out, "User Session");
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+
+public static User loadSession() {
+    File sessionFile = new File(SESSION_FILE);
+    if (!sessionFile.exists()) {
+        return null;
+    }
+    
+    Properties props = new Properties();
+    try (FileInputStream in = new FileInputStream(SESSION_FILE)) {
+        props.load(in);
+        
+        String userId = props.getProperty("userId");
+        String email = props.getProperty("email");
+        String displayName = props.getProperty("displayName");
+        
+        User user = new User();
+        user.setUid(userId);
+        user.setEmail(email);
+        user.setDisplayName(displayName);
+        
+        return user;
+    } catch (IOException e) {
+        e.printStackTrace();
+        return null;
+    }
+}
+
+public static void clearSession() {
+    File sessionFile = new File(SESSION_FILE);
+    if (sessionFile.exists()) {
+        sessionFile.delete();
+    }
+}
+
+public static boolean hasSession() {
+    return new File(SESSION_FILE).exists();
+}
     
     public void signIn(String email, String password, AuthCallback callback) {
         CompletableFuture.runAsync(() -> {
@@ -191,6 +249,10 @@ private void verifyGoogleToken(String idToken, AuthCallback callback) {
                 return EntityUtils.toString(response.getEntity());
             }
         }
+    }
+
+    public static String getClaudeApiKey() {
+        return CLAUDE_API_KEY;
     }
 
     public interface AuthCallback {

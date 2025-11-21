@@ -1,5 +1,6 @@
 package org.aistudytool;
 
+import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -7,13 +8,22 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
-public class LoginView {
-    private Stage stage;
+public class LoginView extends Application {
+    private Stage primaryStage;
     private AuthService authService;
     
-    public LoginView(Stage stage) {
-        this.stage = stage;
+    public LoginView() {
         this.authService = new AuthService();
+    }
+
+    @Override
+    public void start(Stage primaryStage) throws Exception {
+        this.primaryStage = primaryStage;
+
+        Scene scene = createLoginScene();
+        primaryStage.setTitle("AI Study Tool - Login");
+        primaryStage.setScene(scene);
+        primaryStage.show();
     }
     
     public Scene createLoginScene() {
@@ -57,7 +67,7 @@ public class LoginView {
         registerButton.getStyleClass().add("button");
         registerButton.setOnAction(e -> handleRegister(emailField.getText(), passwordField.getText(), errorLabel));
         
-                // Divider with "OR"
+         // Divider with "OR"
         HBox dividerBox = new HBox(10);
         dividerBox.setAlignment(Pos.CENTER);
         dividerBox.setMaxWidth(350);
@@ -127,84 +137,91 @@ public class LoginView {
         return scene;
     }
     
-    private void handleGoogleSignIn(Label errorLabel) {
-        authService.signInWithGoogle(new AuthService.AuthCallback() {
-            @Override
-            public void onSuccess(User user) {
-                javafx.application.Platform.runLater(() -> {
-                    openMainApp(user);
-                });
-            }
-            
-            @Override
-            public void onFailure(String error) {
-                javafx.application.Platform.runLater(() -> {
-                    showError(errorLabel, error);
-                });
-            }
-        });
-    }
-    
-    private void handleLogin(String email, String password, Label errorLabel) {
-        if (email.isEmpty() || password.isEmpty()) {
-            showError(errorLabel, "Please enter email and password");
-            return;
+private void handleGoogleSignIn(Label errorLabel) {
+    authService.signInWithGoogle(new AuthService.AuthCallback() {
+        @Override
+        public void onSuccess(User user) {
+            javafx.application.Platform.runLater(() -> {
+                AuthService.saveSession(user); 
+                openMainApp(user);
+            });
         }
         
-        authService.signIn(email, password, new AuthService.AuthCallback() {
-            @Override
-            public void onSuccess(User user) {
-                javafx.application.Platform.runLater(() -> {
-                    openMainApp(user);
-                });
-            }
-            
-            @Override
-            public void onFailure(String error) {
-                javafx.application.Platform.runLater(() -> {
-                    showError(errorLabel, error);
-                });
-            }
-        });
+        @Override
+        public void onFailure(String error) {
+            javafx.application.Platform.runLater(() -> {
+                showError(errorLabel, error);
+            });
+        }
+    });
+}
+    
+ private void handleLogin(String email, String password, Label errorLabel) {
+    if (email.isEmpty() || password.isEmpty()) {
+        showError(errorLabel, "Please enter email and password");
+        return;
     }
+    
+    authService.signIn(email, password, new AuthService.AuthCallback() {
+        @Override
+        public void onSuccess(User user) {
+            javafx.application.Platform.runLater(() -> {
+                AuthService.saveSession(user);
+                openMainApp(user);
+            });
+        }
+        
+        @Override
+        public void onFailure(String error) {
+            javafx.application.Platform.runLater(() -> {
+                showError(errorLabel, error);
+            });
+        }
+    });
+}
     
     private void handleRegister(String email, String password, Label errorLabel) {
-        if (email.isEmpty() || password.isEmpty()) {
-            showError(errorLabel, "Please enter email and password");
-            return;
-        }
-        
-        if (password.length() < 6) {
-            showError(errorLabel, "Password must be at least 6 characters");
-            return;
-        }
-        
-        authService.signUp(email, password, new AuthService.AuthCallback() {
-            @Override
-            public void onSuccess(User user) {
-                javafx.application.Platform.runLater(() -> {
-                    openMainApp(user);
-                });
-            }
-            
-            @Override
-            public void onFailure(String error) {
-                javafx.application.Platform.runLater(() -> {
-                    showError(errorLabel, error);
-                });
-            }
-        });
+    if (email.isEmpty() || password.isEmpty()) {
+        showError(errorLabel, "Please enter email and password");
+        return;
     }
+    
+    if (password.length() < 6) {
+        showError(errorLabel, "Password must be at least 6 characters");
+        return;
+    }
+    
+    authService.signUp(email, password, new AuthService.AuthCallback() {
+        @Override
+        public void onSuccess(User user) {
+            javafx.application.Platform.runLater(() -> {
+                AuthService.saveSession(user); 
+                openMainApp(user);
+            });
+        }
+        
+        @Override
+        public void onFailure(String error) {
+            javafx.application.Platform.runLater(() -> {
+                showError(errorLabel, error);
+            });
+        }
+    });
+}
     
     private void showError(Label errorLabel, String message) {
         errorLabel.setText(message);
         errorLabel.setVisible(true);
     }
-    
-    private void openMainApp(User user) {
-        AIStudyTool mainApp = new AIStudyTool(user);
+
+   private void openMainApp(User user) {
+        AIStudyTool.setCurrentUser(user); // Set the user statically
+        primaryStage.close(); // Close login window
+        
         try {
-            mainApp.start(stage);
+            AIStudyTool mainApp = new AIStudyTool();
+            Stage mainStage = new Stage();
+            mainApp.start(mainStage);
         } catch (Exception e) {
             e.printStackTrace();
         }
