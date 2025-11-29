@@ -37,13 +37,16 @@ public class Task {
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
     
-    // NESTED FLASHCARD CLASS
+    
     public static class Flashcard {
         private String id;
         private String question;
         private String answer;
         private Date createdAt;
         private String userId;
+        private int masteryLevel; 
+        private int correctCount; 
+        private int incorrectCount; 
         
         public Flashcard() {
             // Required for Firestore
@@ -55,6 +58,9 @@ public class Task {
             this.answer = answer;
             this.createdAt = new Date();
             this.userId = userId;
+            this.masteryLevel = 0; 
+            this.correctCount = 0; 
+            this.incorrectCount = 0; 
         }
         
         // FLASHCARD GETTERS AND SETTERS
@@ -72,5 +78,14 @@ public class Task {
         
         public String getUserId() { return userId; }
         public void setUserId(String userId) { this.userId = userId; }
+        
+        public int getMasteryLevel() { return masteryLevel; }
+        public void setMasteryLevel(int masteryLevel) { this.masteryLevel = masteryLevel; }
+        
+        public int getCorrectCount() { return correctCount; }
+        public void setCorrectCount(int correctCount) { this.correctCount = correctCount; }
+        
+        public int getIncorrectCount() { return incorrectCount; }
+        public void setIncorrectCount(int incorrectCount) { this.incorrectCount = incorrectCount; }
     }
 }

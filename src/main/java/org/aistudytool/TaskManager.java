@@ -147,20 +147,23 @@ public TaskManager(String userId) {
     }
 
      public void addFlashcard(String question, String answer) {
-        Task.Flashcard flashcard = new Task.Flashcard(question, answer, userId);
-        
-        Map<String, Object> flashcardData = new HashMap<>();
-        flashcardData.put("id", flashcard.getId());
-        flashcardData.put("question", flashcard.getQuestion());
-        flashcardData.put("answer", flashcard.getAnswer());
-        flashcardData.put("createdAt", flashcard.getCreatedAt());
-        flashcardData.put("userId", flashcard.getUserId());
-        
-        db.collection("flashcards").document(flashcard.getId()).set(flashcardData);
-        flashcards.add(flashcard);
-        
-        System.out.println("✓ Flashcard saved! Q: " + question);
-    }
+    Task.Flashcard flashcard = new Task.Flashcard(question, answer, userId);
+    
+    Map<String, Object> flashcardData = new HashMap<>();
+    flashcardData.put("id", flashcard.getId());
+    flashcardData.put("question", flashcard.getQuestion());
+    flashcardData.put("answer", flashcard.getAnswer());
+    flashcardData.put("createdAt", flashcard.getCreatedAt());
+    flashcardData.put("userId", flashcard.getUserId());
+    flashcardData.put("masteryLevel", flashcard.getMasteryLevel()); // ADD THIS
+    flashcardData.put("correctCount", flashcard.getCorrectCount()); // ADD THIS
+    flashcardData.put("incorrectCount", flashcard.getIncorrectCount()); // ADD THIS
+    
+    db.collection("flashcards").document(flashcard.getId()).set(flashcardData);
+    flashcards.add(flashcard);
+    
+    System.out.println("✓ Flashcard saved! Q: " + question);
+}
 
     public void deleteFlashcard(Task.Flashcard flashcard) {
         db.collection("flashcards").document(flashcard.getId()).delete();
@@ -185,5 +188,31 @@ public TaskManager(String userId) {
 
     public ObservableList<Task.Flashcard> getFlashcards() {
         return flashcards;
+    }
+
+    public void updateFlashcardMastery(Task.Flashcard flashcard, boolean correct) {
+        if (correct) {
+            flashcard.setCorrectCount(flashcard.getCorrectCount() + 1);
+            // After 3 correct answers, mark as mastered
+            if (flashcard.getCorrectCount() >= 3) {
+                flashcard.setMasteryLevel(2);
+            } else if (flashcard.getMasteryLevel() == 0) {
+                flashcard.setMasteryLevel(1); // Move to reviewing
+            }
+        } else {
+            flashcard.setIncorrectCount(flashcard.getIncorrectCount() + 1);
+            // Reset to reviewing if they get it wrong
+            if (flashcard.getMasteryLevel() == 2) {
+                flashcard.setMasteryLevel(1);
+            }
+        }
+        
+        // Update in Firestore
+        java.util.Map<String, Object> updates = new java.util.HashMap<>();
+        updates.put("masteryLevel", flashcard.getMasteryLevel());
+        updates.put("correctCount", flashcard.getCorrectCount());
+        updates.put("incorrectCount", flashcard.getIncorrectCount());
+        
+        db.collection("flashcards").document(flashcard.getId()).update(updates);
     }
 }

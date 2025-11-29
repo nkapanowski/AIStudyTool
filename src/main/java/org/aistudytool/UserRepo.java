@@ -12,6 +12,24 @@ public class UserRepo {
     public UserRepo() {
         this.db = FirebaseConfig.getFirestore();
     }
+
+    public User getUserById(String uid) {
+    try {
+        DocumentSnapshot document = db.collection("users")
+            .document(uid)
+            .get()
+            .get();
+        
+        if (document.exists()) {
+            return document.toObject(User.class);
+        } else {
+            return null; // User doesn't exist
+        }
+    } catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
+        return null;
+    }
+}
     
     @SuppressWarnings("null")
     public User getUser(String uid) {
