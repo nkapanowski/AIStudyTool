@@ -453,7 +453,15 @@ private String buildPrompt(String question, String mode) {
         case "Learn":
             return "Explain this concept in detail for a student: " + question;
         case "Q&A":
-            return "Answer this question directly and concisely: " + question;
+            String topic = "";
+            if (!taskManager.getTasks().isEmpty()) {
+                topic = taskManager.getTasks().get(0).getTitle();
+            }
+            return "TOPIC: " + topic + "\n\n" +
+                    "User's response: " + question + "\n\n" +
+                    "If this is the first message generate a practice question about " + topic + ". " +
+                    "or evaluate their answer and generate the NEXT question about " + topic + ". " +
+                    "Never ask for the topic and only display in unicode";
         case "Flashcard":
             return "Create a flashcard for studying. Format your response EXACTLY like this:\n\n" +
                    "Q: [Write a clear question about: " + question + "]\n" +
