@@ -8,9 +8,21 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
+import org.apache.poi.xslf.usermodel.XMLSlideShow;
 
 public class TaskManager {
     private Firestore db;
@@ -147,22 +159,7 @@ public TaskManager(String userId) {
     }
 
      public void addFlashcard(String question, String answer) {
-    Task.Flashcard flashcard = new Task.Flashcard(question, answer, userId);
-    
-    Map<String, Object> flashcardData = new HashMap<>();
-    flashcardData.put("id", flashcard.getId());
-    flashcardData.put("question", flashcard.getQuestion());
-    flashcardData.put("answer", flashcard.getAnswer());
-    flashcardData.put("createdAt", flashcard.getCreatedAt());
-    flashcardData.put("userId", flashcard.getUserId());
-    flashcardData.put("masteryLevel", flashcard.getMasteryLevel()); // ADD THIS
-    flashcardData.put("correctCount", flashcard.getCorrectCount()); // ADD THIS
-    flashcardData.put("incorrectCount", flashcard.getIncorrectCount()); // ADD THIS
-    
-    db.collection("flashcards").document(flashcard.getId()).set(flashcardData);
-    flashcards.add(flashcard);
-    
-    System.out.println("✓ Flashcard saved! Q: " + question);
+    addFlashcard(question, answer, "Default"); // Use default set
 }
 
     public void deleteFlashcard(Task.Flashcard flashcard) {
@@ -214,5 +211,159 @@ public TaskManager(String userId) {
         updates.put("incorrectCount", flashcard.getIncorrectCount());
         
         db.collection("flashcards").document(flashcard.getId()).update(updates);
+    }
+    
+    // Get unique set names
+    public List<String> getFlashcardSets() {
+        return flashcards.stream()
+            .map(Task.Flashcard::getSetName)
+            .filter(setName -> setName != null && !setName.isEmpty()) // Add null check
+            .distinct()
+            .sorted()
+            .collect(Collectors.toList());
+    }
+
+    // Get flashcards by set
+    public ObservableList<Task.Flashcard> getFlashcardsBySet(String setName) {
+        return flashcards.filtered(fc -> fc.getSetName().equals(setName));
+    }
+
+    // Add flashcard with set name
+    public void addFlashcard(String question, String answer, String setName) {
+        Task.Flashcard flashcard = new Task.Flashcard(question, answer, userId, setName);
+        
+        Map<String, Object> flashcardData = new HashMap<>();
+        flashcardData.put("id", flashcard.getId());
+        flashcardData.put("question", flashcard.getQuestion());
+        flashcardData.put("answer", flashcard.getAnswer());
+        flashcardData.put("createdAt", flashcard.getCreatedAt());
+        flashcardData.put("userId", flashcard.getUserId());
+        flashcardData.put("masteryLevel", flashcard.getMasteryLevel());
+        flashcardData.put("correctCount", flashcard.getCorrectCount());
+        flashcardData.put("incorrectCount", flashcard.getIncorrectCount());
+        flashcardData.put("setName", flashcard.getSetName()); // ADD THIS
+        
+        db.collection("flashcards").document(flashcard.getId()).set(flashcardData);
+        flashcards.add(flashcard);
+        
+        System.out.println("✓ Flashcard saved to set: " + setName);
+    }
+
+    // Process uploaded file and generate flashcards using AI
+    public void processUploadedFile(File file, String setName, AIService aiService, Runnable onComplete) {
+        try {
+            String content = "";
+            String fileName = file.getName().toLowerCase();
+            
+            // Extract text based on file type
+            if (fileName.endsWith(".txt")) {
+                content = Files.readString(file.toPath());
+            } 
+            else if (fileName.endsWith(".pdf")) {
+                content = extractTextFromPDF(file);
+            } 
+            else if (fileName.endsWith(".doc") || fileName.endsWith(".docx")) {
+                content = extractTextFromWord(file);
+            } 
+            else if (fileName.endsWith(".ppt") || fileName.endsWith(".pptx")) {
+                content = extractTextFromPowerPoint(file);
+            }
+            else {
+                System.out.println("Unsupported file type: " + fileName);
+                return;
+            }
+            
+            // Limit content size (Claude API has token limits)
+            if (content.length() > 10000) {
+                content = content.substring(0, 10000);
+            }
+            
+            // Create AI prompt to generate flashcards
+            String prompt = "Based on this study material, generate 10 flashcards in this exact format:\n\n" +
+                           "Q: [Question]\n" +
+                           "A: [Answer]\n\n" +
+                           "Material:\n" + content;
+            
+            // Call AI to generate flashcards
+            aiService.askQuestion(prompt, new AIService.AICallback() {
+                @Override
+                public void onSuccess(String response) {
+                    parseAndSaveMultipleFlashcards(response, setName);
+                    if (onComplete != null) {
+                        javafx.application.Platform.runLater(onComplete);
+                    }
+                }
+                
+                @Override
+                public void onFailure(String error) {
+                    System.out.println("Error generating flashcards: " + error);
+                }
+            });
+            
+        } catch (IOException e) {
+            System.out.println("Error reading file: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // ADD THESE HELPER METHODS
+    private String extractTextFromPDF(File file) throws IOException {
+        try (PDDocument document = PDDocument.load(file)) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            return stripper.getText(document);
+        }
+    }
+
+    private String extractTextFromWord(File file) throws IOException {
+        try (FileInputStream fis = new FileInputStream(file);
+             XWPFDocument document = new XWPFDocument(fis);
+             XWPFWordExtractor extractor = new XWPFWordExtractor(document)) {
+            return extractor.getText();
+        }
+    }
+
+    private String extractTextFromPowerPoint(File file) throws IOException {
+    try (FileInputStream fis = new FileInputStream(file);
+         XMLSlideShow ppt = new XMLSlideShow(fis)) {
+    
+        StringBuilder text = new StringBuilder();
+        
+        // Extract text from each slide
+        ppt.getSlides().forEach(slide -> {
+            slide.getShapes().forEach(shape -> {
+                if (shape instanceof org.apache.poi.xslf.usermodel.XSLFTextShape) {
+                    org.apache.poi.xslf.usermodel.XSLFTextShape textShape = 
+                        (org.apache.poi.xslf.usermodel.XSLFTextShape) shape;
+                    String shapeText = textShape.getText();
+                    if (shapeText != null && !shapeText.isEmpty()) {
+                        text.append(shapeText).append("\n");
+                    }
+                }
+            });
+        });
+        
+        return text.toString();
+    }
+}
+    
+    // Parse multiple flashcards from AI response
+    private void parseAndSaveMultipleFlashcards(String response, String setName) {
+        String[] lines = response.split("\n");
+        String currentQuestion = "";
+        
+        for (String line : lines) {
+            line = line.trim();
+            if (line.startsWith("Q:")) {
+                currentQuestion = line.substring(2).trim();
+            } else if (line.startsWith("A:") && !currentQuestion.isEmpty()) {
+                String answer = line.substring(2).trim();
+                addFlashcard(currentQuestion, answer, setName);
+                currentQuestion = "";
+            }
+        }
+    }
+
+    public Firestore getDb() {
+        return db;
     }
 }

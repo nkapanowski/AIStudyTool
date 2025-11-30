@@ -171,6 +171,26 @@
       <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>  
+    <!-- PDF support -->
+<dependency>
+    <groupId>org.apache.pdfbox</groupId>
+    <artifactId>pdfbox</artifactId>
+    <version>2.0.29</version>
+</dependency>
+
+<!-- Word (.doc, .docx) support -->
+<dependency>
+    <groupId>org.apache.poi</groupId>
+    <artifactId>poi-ooxml</artifactId>
+    <version>5.2.3</version>
+</dependency>
+
+<!-- PowerPoint (.ppt, .pptx) support -->
+<dependency>
+    <groupId>org.apache.poi</groupId>
+    <artifactId>poi-scratchpad</artifactId>
+    <version>5.2.3</version>
+</dependency>
   </dependencies>
 
   <build>

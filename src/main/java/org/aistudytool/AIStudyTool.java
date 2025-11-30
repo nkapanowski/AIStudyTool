@@ -1,4 +1,5 @@
 package org.aistudytool;
+
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -6,7 +7,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 
 public class AIStudyTool extends Application {
     private VBox taskListContainer;
@@ -171,7 +171,8 @@ public class AIStudyTool extends Application {
         
         // Only flashcard section below
         VBox flashcardSection = createFlashcardSection();
-        
+        VBox.setVgrow(flashcardSection, Priority.SOMETIMES);
+
         panel.getChildren().addAll(chatBox, flashcardSection);
         return panel;
     }
@@ -351,223 +352,95 @@ private VBox createFlashcardSection() {
     VBox section = new VBox(10);
     section.setPadding(new Insets(15));
     section.getStyleClass().add("panel");
-    section.setMaxHeight(250);
-    
+    section.setMaxHeight(400);
+
     HBox header = new HBox(10);
     header.setAlignment(Pos.CENTER_LEFT);
-    
-    Label title = new Label("My Flashcards (" + taskManager.getFlashcards().size() + ")");
-    title.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");
-    
+
+    Label title = new Label("My Flashcards");
+    title.getStyleClass().add("title");
+
+    // --- SINGLE SET SELECTION DROPDOWN ---
+    ComboBox<String> setComboBox = new ComboBox<>();
+    setComboBox.getItems().addAll(taskManager.getFlashcardSets());
+    setComboBox.setEditable(true);
+    setComboBox.setPromptText("Select or add a set");
+    if (!taskManager.getFlashcardSets().isEmpty()) {
+        setComboBox.setValue(taskManager.getFlashcardSets().get(0));
+    }
+
+    Button uploadButton = new Button("📁 Upload");
+    uploadButton.getStyleClass().add("button");
+    uploadButton.setOnAction(e -> showUploadDialog());
+
     Button refreshButton = new Button("↻");
     refreshButton.getStyleClass().add("button");
     refreshButton.setOnAction(e -> refreshFlashcards());
-    
+
     Region spacer = new Region();
     HBox.setHgrow(spacer, Priority.ALWAYS);
-    
-    header.getChildren().addAll(title, spacer, refreshButton);
-    
-    ListView<Task.Flashcard> flashcardListView = new ListView<>(taskManager.getFlashcards());
-    flashcardListView.setPrefHeight(200);
-    flashcardListView.getStyleClass().add("task-list");
-    
-    flashcardListView.setCellFactory(lv -> new javafx.scene.control.ListCell<Task.Flashcard>() {
-        private boolean isFlipped = false;
-        
-        @Override
-        protected void updateItem(Task.Flashcard flashcard, boolean empty) {
-            super.updateItem(flashcard, empty);
-            if (empty || flashcard == null) {
-                setGraphic(null);
-            } else {
-                isFlipped = false;
-                
-                VBox card = new VBox(10);
-                card.setPadding(new Insets(12));
-                
-                // Color based on mastery level
-                String borderColor = flashcard.getMasteryLevel() == 2 ? "#4CAF50" : // Green = Mastered
-                                    flashcard.getMasteryLevel() == 1 ? "#FFC107" : // Yellow = Reviewing
-                                    "#333333"; // Gray = New
-                
-                card.setStyle(
-                    "-fx-background-color: #1a1a1a; " +
-                    "-fx-background-radius: 8px; " +
-                    "-fx-border-color: " + borderColor + "; " +
-                    "-fx-border-radius: 8px; " +
-                    "-fx-border-width: 2px; " +
-                    "-fx-cursor: hand;"
-                );
-                
-                // Mastery badge
-                String masteryText = flashcard.getMasteryLevel() == 2 ? "✓ Mastered" :
-                                   flashcard.getMasteryLevel() == 1 ? "📚 Reviewing" :
-                                   "🆕 New";
-                Label masteryBadge = new Label(masteryText);
-                masteryBadge.setStyle(
-                    "-fx-text-fill: " + (flashcard.getMasteryLevel() == 2 ? "#4CAF50" : 
-                                        flashcard.getMasteryLevel() == 1 ? "#FFC107" : "#888888") + "; " +
-                    "-fx-font-size: 10px; " +
-                    "-fx-font-weight: bold;"
-                );
-                
-                // Stats
-                Label stats = new Label("✓ " + flashcard.getCorrectCount() + " | ✗ " + flashcard.getIncorrectCount());
-                stats.setStyle("-fx-text-fill: #666666; -fx-font-size: 10px;");
-                
-                // Question
-                Label questionLabel = new Label("Q: " + flashcard.getQuestion());
-                questionLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 13px;");
-                questionLabel.setWrapText(true);
-                
-                // Answer (hidden initially)
-                Label answerLabel = new Label("A: " + flashcard.getAnswer());
-                answerLabel.setStyle("-fx-text-fill: #888888; -fx-font-size: 12px;");
-                answerLabel.setWrapText(true);
-                answerLabel.setVisible(false);
-                answerLabel.setManaged(false);
-                
-                // Flip hint
-                Label flipHint = new Label("💡 Click to reveal answer");
-                flipHint.setStyle("-fx-text-fill: #666666; -fx-font-size: 11px; -fx-font-style: italic;");
-                
-                // Interactive buttons (shown after flip)
-                HBox interactiveButtons = new HBox(10);
-                interactiveButtons.setAlignment(Pos.CENTER);
-                interactiveButtons.setVisible(false);
-                interactiveButtons.setManaged(false);
-                
-                Button gotItBtn = new Button("✓ Got it!");
-                gotItBtn.setStyle(
-                    "-fx-background-color: #4CAF50; " +
-                    "-fx-text-fill: white; " +
-                    "-fx-font-size: 11px; " +
-                    "-fx-padding: 5 15; " +
-                    "-fx-background-radius: 5px; " +
-                    "-fx-cursor: hand;"
-                );
-                gotItBtn.setOnAction(e -> {
-                    e.consume();
-                    taskManager.updateFlashcardMastery(flashcard, true);
-                    refreshFlashcards();
-                });
-                
-                Button needReviewBtn = new Button("✗ Need Review");
-                needReviewBtn.setStyle(
-                    "-fx-background-color: #ff4444; " +
-                    "-fx-text-fill: white; " +
-                    "-fx-font-size: 11px; " +
-                    "-fx-padding: 5 15; " +
-                    "-fx-background-radius: 5px; " +
-                    "-fx-cursor: hand;"
-                );
-                needReviewBtn.setOnAction(e -> {
-                    e.consume();
-                    taskManager.updateFlashcardMastery(flashcard, false);
-                    refreshFlashcards();
-                });
-                
-                interactiveButtons.getChildren().addAll(gotItBtn, needReviewBtn);
-                
-                // Delete button
-                Button deleteBtn = new Button("×");
-                deleteBtn.setStyle(
-                    "-fx-background-color: transparent; " +
-                    "-fx-text-fill: #ff4444; " +
-                    "-fx-font-size: 18px; " +
-                    "-fx-font-weight: bold; " +
-                    "-fx-cursor: hand;"
-                );
-                deleteBtn.setOnAction(e -> {
-                    e.consume();
-                    taskManager.deleteFlashcard(flashcard);
-                    refreshFlashcards();
-                });
-                
-                // Top row
-                HBox topRow = new HBox(10);
-                topRow.setAlignment(Pos.CENTER_LEFT);
-                Region topSpacer = new Region();
-                HBox.setHgrow(topSpacer, Priority.ALWAYS);
-                topRow.getChildren().addAll(masteryBadge, stats, topSpacer, deleteBtn);
-                
-                card.getChildren().addAll(topRow, questionLabel, answerLabel, flipHint, interactiveButtons);
-                
-                // Click to flip
-                card.setOnMouseClicked(event -> {
-                    isFlipped = !isFlipped;
-                    
-                    if (isFlipped) {
-                        answerLabel.setVisible(true);
-                        answerLabel.setManaged(true);
-                        flipHint.setVisible(false);
-                        flipHint.setManaged(false);
-                        interactiveButtons.setVisible(true);
-                        interactiveButtons.setManaged(true);
-                        card.setStyle(
-                            "-fx-background-color: #252525; " +
-                            "-fx-background-radius: 8px; " +
-                            "-fx-border-color: #4CAF50; " +
-                            "-fx-border-radius: 8px; " +
-                            "-fx-border-width: 2px; " +
-                            "-fx-cursor: hand;"
-                        );
-                    } else {
-                        answerLabel.setVisible(false);
-                        answerLabel.setManaged(false);
-                        flipHint.setVisible(true);
-                        flipHint.setManaged(true);
-                        interactiveButtons.setVisible(false);
-                        interactiveButtons.setManaged(false);
-                        card.setStyle(
-                            "-fx-background-color: #1a1a1a; " +
-                            "-fx-background-radius: 8px; " +
-                            "-fx-border-color: " + borderColor + "; " +
-                            "-fx-border-radius: 8px; " +
-                            "-fx-border-width: 2px; " +
-                            "-fx-cursor: hand;"
-                        );
-                    }
-                });
-                
-                // Hover effect
-                card.setOnMouseEntered(e -> {
-                    if (!isFlipped) {
-                        card.setStyle(
-                            "-fx-background-color: #1f1f1f; " +
-                            "-fx-background-radius: 8px; " +
-                            "-fx-border-color: #4CAF50; " +
-                            "-fx-border-radius: 8px; " +
-                            "-fx-border-width: 2px; " +
-                            "-fx-cursor: hand;"
-                        );
-                    }
-                });
-                
-                card.setOnMouseExited(e -> {
-                    if (!isFlipped) {
-                        card.setStyle(
-                            "-fx-background-color: #1a1a1a; " +
-                            "-fx-background-radius: 8px; " +
-                            "-fx-border-color: " + borderColor + "; " +
-                            "-fx-border-radius: 8px; " +
-                            "-fx-border-width: 2px; " +
-                            "-fx-cursor: hand;"
-                        );
-                    }
-                });
-                
-                setGraphic(card);
+
+    header.getChildren().addAll(title, setComboBox, spacer, uploadButton, refreshButton);
+
+    VBox flashcardList = new VBox(15);
+    flashcardList.setPadding(new Insets(10));
+
+    // Helper to refresh flashcards for selected set
+    Runnable updateFlashcardList = () -> {
+        flashcardList.getChildren().clear();
+        String selectedSet = setComboBox.getValue();
+        if (selectedSet != null) {
+            for (Task.Flashcard flashcard : taskManager.getFlashcards()) {
+                if (selectedSet.equals(flashcard.getSetName())) {
+                    flashcardList.getChildren().add(createFlashcardCard(flashcard));
+                }
             }
         }
-    });
-    
-    section.getChildren().addAll(header, flashcardListView);
+    };
+
+    setComboBox.setOnAction(e -> updateFlashcardList.run());
+
+    // Initial load
+    updateFlashcardList.run();
+
+    ScrollPane scrollPane = new ScrollPane(flashcardList);
+    scrollPane.setFitToWidth(true);
+    scrollPane.setStyle("-fx-background: transparent;");
+
+    section.getChildren().setAll(header, scrollPane);
     return section;
 }
 
+// Helper to create a flashcard card with editable set ComboBox
+private VBox createFlashcardCard(Task.Flashcard flashcard) {
+    VBox card = new VBox(10);
+    card.setPadding(new Insets(12));
+    card.setStyle("-fx-background-color: #1a1a1a; -fx-background-radius: 8px; -fx-border-color: #333; -fx-border-radius: 8px; -fx-border-width: 2px;");
 
+    Label questionLabel = new Label("Q: " + flashcard.getQuestion());
+    questionLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 13px;");
+    questionLabel.setWrapText(true);
+
+    Label answerLabel = new Label("A: " + flashcard.getAnswer());
+    answerLabel.setStyle("-fx-text-fill: #888888; -fx-font-size: 12px;");
+    answerLabel.setWrapText(true);
+    answerLabel.setVisible(false);
+
+    Button deleteBtn = new Button("×");
+    deleteBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #ff4444; -fx-font-size: 18px; -fx-font-weight: bold; -fx-cursor: hand;");
+    deleteBtn.setOnAction(e -> {
+        taskManager.deleteFlashcard(flashcard);
+        refreshFlashcards();
+    });
+
+    card.getChildren().addAll(questionLabel, answerLabel, deleteBtn);
+
+    card.setOnMouseClicked(event -> {
+        answerLabel.setVisible(!answerLabel.isVisible());
+    });
+
+    return card;
+}
 private void refreshFlashcards() {
     BorderPane root = (BorderPane) primaryStage.getScene().getRoot();
     VBox rightPanel = createRightPanel();
@@ -634,5 +507,49 @@ private void loadChatHistoryForMode(String mode) {
     } catch (Exception e) {
         System.out.println("Error loading chat history: " + e.getMessage());
     }
+}
+
+private void showUploadDialog() {
+    javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
+    fileChooser.setTitle("Upload Study Material");
+    fileChooser.getExtensionFilters().addAll(
+        new javafx.stage.FileChooser.ExtensionFilter("All Supported Files", 
+            "*.txt", "*.pdf", "*.doc", "*.docx", "*.ppt", "*.pptx"),
+        new javafx.stage.FileChooser.ExtensionFilter("Text Files", "*.txt"),
+        new javafx.stage.FileChooser.ExtensionFilter("PDF Files", "*.pdf"),
+        new javafx.stage.FileChooser.ExtensionFilter("Word Documents", "*.doc", "*.docx"),
+        new javafx.stage.FileChooser.ExtensionFilter("PowerPoint", "*.ppt", "*.pptx"),
+        new javafx.stage.FileChooser.ExtensionFilter("All Files", "*.*")
+    );
+    
+    java.io.File file = fileChooser.showOpenDialog(primaryStage);
+    
+    if (file != null) {
+        // Prompt for set name
+        String defaultName = file.getName().replaceAll("\\.(txt|pdf|doc|docx|ppt|pptx)$", "");
+        javafx.scene.control.TextInputDialog dialog = new javafx.scene.control.TextInputDialog(defaultName);
+        dialog.setTitle("Create Flashcard Set");
+        dialog.setHeaderText("Name your flashcard set:");
+        dialog.setContentText("Set name:");
+        
+        dialog.showAndWait().ifPresent(setName -> {
+            System.out.println("Processing file: " + file.getName());
+            System.out.println("Creating flashcard set: " + setName);
+            
+            AIService aiService = new AIService();
+            taskManager.processUploadedFile(file, setName, aiService, () -> {
+                refreshFlashcards();
+                showAlert("Success", "Flashcards generated from " + file.getName() + "!");
+            });
+        });
+    }
+}
+
+private void showAlert(String title, String message) {
+    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+    alert.setTitle(title);
+    alert.setHeaderText(null);
+    alert.setContentText(message);
+    alert.showAndWait();
 }
 }

@@ -44,9 +44,10 @@ public class Task {
         private String answer;
         private Date createdAt;
         private String userId;
-        private int masteryLevel; 
-        private int correctCount; 
-        private int incorrectCount; 
+        private int masteryLevel;
+        private int correctCount;
+        private int incorrectCount;
+        private String setName; //  organize flashcards into sets
         
         public Flashcard() {
             // Required for Firestore
@@ -58,9 +59,23 @@ public class Task {
             this.answer = answer;
             this.createdAt = new Date();
             this.userId = userId;
-            this.masteryLevel = 0; 
-            this.correctCount = 0; 
-            this.incorrectCount = 0; 
+            this.masteryLevel = 0;
+            this.correctCount = 0;
+            this.incorrectCount = 0;
+            this.setName = "Default"; // Always set a default
+        }
+        
+        // OVERLOADED CONSTRUCTOR with set name
+        public Flashcard(String question, String answer, String userId, String setName) {
+            this.id = java.util.UUID.randomUUID().toString();
+            this.question = question;
+            this.answer = answer;
+            this.userId = userId;
+            this.setName = (setName != null && !setName.isEmpty()) ? setName : "Default";
+            this.createdAt = new Date();
+            this.masteryLevel = 0;
+            this.correctCount = 0;
+            this.incorrectCount = 0;
         }
         
         // FLASHCARD GETTERS AND SETTERS
@@ -87,5 +102,8 @@ public class Task {
         
         public int getIncorrectCount() { return incorrectCount; }
         public void setIncorrectCount(int incorrectCount) { this.incorrectCount = incorrectCount; }
+        
+        public String getSetName() { return setName; }
+        public void setSetName(String setName) { this.setName = setName; }
     }
 }
