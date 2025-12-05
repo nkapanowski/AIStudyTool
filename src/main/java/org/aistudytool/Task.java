@@ -105,5 +105,22 @@ public class Task {
         
         public String getSetName() { return setName; }
         public void setSetName(String setName) { this.setName = setName; }
+        
+        public void incrementCorrectCount() {
+            this.correctCount++;
+        }
+
+        public void incrementIncorrectCount() {
+            this.incorrectCount++;
+        }
+
+        // Example mastery logic: mastered if correctCount >= 3 and incorrectCount == 0
+        public void updateMasteryLevel() {
+            if (correctCount >= 3) {
+                this.masteryLevel = 2; // Mastered
+            } else {
+                this.masteryLevel = 1; // Reviewing
+            }
+        }
     }
 }

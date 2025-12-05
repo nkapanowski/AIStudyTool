@@ -329,7 +329,7 @@ private void parseAndSaveFlashcard(String response, String topic) {
         String[] parts = response.split("\n");
         String question = "";
         String answer = "";
-        
+
         for (String line : parts) {
             if (line.trim().startsWith("Q:")) {
                 question = line.substring(2).trim();
@@ -337,11 +337,43 @@ private void parseAndSaveFlashcard(String response, String topic) {
                 answer = line.substring(2).trim();
             }
         }
-        
-        if (!question.isEmpty() && !answer.isEmpty()) {
-            taskManager.addFlashcard(question, answer);
-            refreshFlashcards(); 
-            System.out.println("✓ Flashcard saved successfully!");
+
+        // Make them final for lambda use
+        final String finalQuestion = question;
+        final String finalAnswer = answer;
+
+        if (!finalQuestion.isEmpty() && !finalAnswer.isEmpty()) {
+            // Create a custom dialog with ComboBox for set selection
+            Dialog<String> dialog = new Dialog<>();
+            dialog.setTitle("Add Flashcard to Set");
+            dialog.setHeaderText("Choose an existing set or enter a new set name:");
+
+            ButtonType okButtonType = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
+            dialog.getDialogPane().getButtonTypes().addAll(okButtonType, ButtonType.CANCEL);
+
+            ComboBox<String> setComboBox = new ComboBox<>();
+            setComboBox.getItems().addAll(taskManager.getFlashcardSets());
+            setComboBox.setEditable(true);
+            setComboBox.setPromptText("Set name");
+            setComboBox.setValue("Default");
+
+            VBox content = new VBox(10, new Label("Set name:"), setComboBox);
+            dialog.getDialogPane().setContent(content);
+
+            dialog.setResultConverter(dialogButton -> {
+                if (dialogButton == okButtonType) {
+                    return setComboBox.getEditor().getText().trim();
+                }
+                return null;
+            });
+
+            dialog.showAndWait().ifPresent(setName -> {
+                if (!setName.isEmpty()) {
+                    taskManager.addFlashcard(finalQuestion, finalAnswer, setName);
+                    refreshFlashcards();
+                    System.out.println("✓ Flashcard saved to set: " + setName);
+                }
+            });
         }
     } catch (Exception e) {
         System.out.println("Error saving flashcard: " + e.getMessage());
@@ -417,6 +449,11 @@ private VBox createFlashcardCard(Task.Flashcard flashcard) {
     card.setPadding(new Insets(12));
     card.setStyle("-fx-background-color: #1a1a1a; -fx-background-radius: 8px; -fx-border-color: #333; -fx-border-radius: 8px; -fx-border-width: 2px;");
 
+    // Status label for mastery/review
+    Label statusLabel = new Label();
+    statusLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #FFD600; -fx-font-size: 14px;");
+    updateStatusLabel(statusLabel, flashcard);
+
     Label questionLabel = new Label("Q: " + flashcard.getQuestion());
     questionLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 13px;");
     questionLabel.setWrapText(true);
@@ -426,6 +463,32 @@ private VBox createFlashcardCard(Task.Flashcard flashcard) {
     answerLabel.setWrapText(true);
     answerLabel.setVisible(false);
 
+    // "Click to reveal answer" hint with lightbulb
+    Label flipHint = new Label("\uD83D\uDCA1 Click to reveal answer");
+    flipHint.setStyle("-fx-text-fill: #a4a39eff; -fx-font-size: 12px; -fx-font-style: italic;");
+
+    // Mastery/Review buttons 
+    Button correctBtn = new Button("✔ Got it!");
+    correctBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 13px; -fx-padding: 4 16 4 16;");
+    correctBtn.setOnAction(e -> {
+        flashcard.incrementCorrectCount();
+        flashcard.updateMasteryLevel();
+        updateStatusLabel(statusLabel, flashcard);
+        taskManager.saveFlashcard(flashcard);
+    });
+
+    Button wrongBtn = new Button("✗ Need Review");
+    wrongBtn.setStyle("-fx-background-color: #F44336; -fx-text-fill: white; -fx-font-size: 13px; -fx-padding: 4 16 4 16;");
+    wrongBtn.setOnAction(e -> {
+        flashcard.incrementIncorrectCount();
+        flashcard.updateMasteryLevel();
+        updateStatusLabel(statusLabel, flashcard);
+        taskManager.saveFlashcard(flashcard);
+    });
+
+    HBox buttonRow = new HBox(10, correctBtn, wrongBtn);
+    buttonRow.setAlignment(Pos.CENTER);
+
     Button deleteBtn = new Button("×");
     deleteBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #ff4444; -fx-font-size: 18px; -fx-font-weight: bold; -fx-cursor: hand;");
     deleteBtn.setOnAction(e -> {
@@ -433,13 +496,19 @@ private VBox createFlashcardCard(Task.Flashcard flashcard) {
         refreshFlashcards();
     });
 
-    card.getChildren().addAll(questionLabel, answerLabel, deleteBtn);
+    card.getChildren().addAll(statusLabel, questionLabel, flipHint, answerLabel, buttonRow, deleteBtn);
 
     card.setOnMouseClicked(event -> {
         answerLabel.setVisible(!answerLabel.isVisible());
     });
 
     return card;
+}
+
+// Add this helper method to update the status label
+private void updateStatusLabel(Label label, Task.Flashcard flashcard) {
+    String status = flashcard.getMasteryLevel() == 2 ? "Mastered" : "Reviewing";
+    label.setText("📚 " + status + "   ✓ " + flashcard.getCorrectCount() + " | ✗ " + flashcard.getIncorrectCount());
 }
 private void refreshFlashcards() {
     BorderPane root = (BorderPane) primaryStage.getScene().getRoot();
@@ -453,7 +522,15 @@ private String buildPrompt(String question, String mode) {
         case "Learn":
             return "Explain this concept in detail for a student: " + question;
         case "Q&A":
-            return "Answer this question directly and concisely: " + question;
+            String topic = "";
+            if (!taskManager.getTasks().isEmpty()) {
+                topic = taskManager.getTasks().get(0).getTitle();
+            }
+            return "TOPIC: " + topic + "\n\n" +
+                    "User's response: " + question + "\n\n" +
+                    "If this is the first message generate a practice question about " + topic + ". " +
+                    "or evaluate their answer and generate the NEXT question about " + topic + ". " +
+                    "Never ask for the topic and only display in unicode";
         case "Flashcard":
             return "Create a flashcard for studying. Format your response EXACTLY like this:\n\n" +
                    "Q: [Write a clear question about: " + question + "]\n" +

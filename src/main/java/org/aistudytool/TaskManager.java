@@ -190,27 +190,16 @@ public TaskManager(String userId) {
     public void updateFlashcardMastery(Task.Flashcard flashcard, boolean correct) {
         if (correct) {
             flashcard.setCorrectCount(flashcard.getCorrectCount() + 1);
-            // After 3 correct answers, mark as mastered
             if (flashcard.getCorrectCount() >= 3) {
-                flashcard.setMasteryLevel(2);
-            } else if (flashcard.getMasteryLevel() == 0) {
-                flashcard.setMasteryLevel(1); // Move to reviewing
+                flashcard.setMasteryLevel(2); // Mastered
+            } else {
+                flashcard.setMasteryLevel(1); // Reviewing
             }
         } else {
             flashcard.setIncorrectCount(flashcard.getIncorrectCount() + 1);
-            // Reset to reviewing if they get it wrong
-            if (flashcard.getMasteryLevel() == 2) {
-                flashcard.setMasteryLevel(1);
-            }
+            flashcard.setMasteryLevel(0); // Reviewing
         }
-        
-        // Update in Firestore
-        java.util.Map<String, Object> updates = new java.util.HashMap<>();
-        updates.put("masteryLevel", flashcard.getMasteryLevel());
-        updates.put("correctCount", flashcard.getCorrectCount());
-        updates.put("incorrectCount", flashcard.getIncorrectCount());
-        
-        db.collection("flashcards").document(flashcard.getId()).update(updates);
+        saveFlashcard(flashcard);
     }
     
     // Get unique set names
@@ -365,5 +354,20 @@ public TaskManager(String userId) {
 
     public Firestore getDb() {
         return db;
+    }
+
+    public void saveFlashcard(Task.Flashcard flashcard) {
+        Map<String, Object> flashcardData = new HashMap<>();
+        flashcardData.put("id", flashcard.getId());
+        flashcardData.put("question", flashcard.getQuestion());
+        flashcardData.put("answer", flashcard.getAnswer());
+        flashcardData.put("createdAt", flashcard.getCreatedAt());
+        flashcardData.put("userId", flashcard.getUserId());
+        flashcardData.put("masteryLevel", flashcard.getMasteryLevel());
+        flashcardData.put("correctCount", flashcard.getCorrectCount());
+        flashcardData.put("incorrectCount", flashcard.getIncorrectCount());
+        flashcardData.put("setName", flashcard.getSetName());
+
+        db.collection("flashcards").document(flashcard.getId()).set(flashcardData);
     }
 }

@@ -21,8 +21,8 @@ import java.util.concurrent.CompletableFuture;
 
 public class AuthService {
     private static final String FIREBASE_API_KEY = "APIKEY";
-    private static final String GOOGLE_CLIENT_ID = "CLENTID";
-    private static final String CLAUDE_API_KEY = "CLAUDEKEY";       
+private static final String GOOGLE_CLIENT_ID = "CLIENTID";
+    private static final String CLAUDE_API_KEY = "CLAUDEAPIKEY";      
     private static final String AUTH_DOMAIN = "aistudytool-d7a8a.firebaseapp.com";
     private static final String SIGN_IN_URL = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + FIREBASE_API_KEY;
     private static final String SIGN_UP_URL = "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=" + FIREBASE_API_KEY;
