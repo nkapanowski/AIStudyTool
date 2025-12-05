@@ -1,0 +1,28 @@
+module org.aistudytool {
+    requires transitive javafx.controls;
+    requires transitive javafx.fxml;
+    requires transitive javafx.graphics;
+    requires javafx.web;
+
+    requires org.controlsfx.controls;
+    requires com.dlsc.formsfx;
+    requires net.synedra.validatorfx;
+    requires org.kordamp.ikonli.javafx;
+    requires org.kordamp.bootstrapfx.core;
+    requires eu.hansolo.tilesfx;
+    requires com.almasb.fxgl.all;
+    
+    requires com.google.auth.oauth2;
+    requires com.google.auth;
+    requires google.cloud.firestore;
+    requires firebase.admin;
+    requires com.google.api.apicommon;
+    requires com.google.gson;
+    requires org.apache.httpcomponents.client5.httpclient5;
+    requires org.apache.httpcomponents.core5.httpcore5;
+
+    requires java.desktop;
+
+    opens org.aistudytool to javafx.fxml, com.google.cloud.firestore;
+    exports org.aistudytool;
+}

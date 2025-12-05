@@ -50,7 +50,7 @@ public class Task {
         private String setName; //  organize flashcards into sets
         
         public Flashcard() {
-            // Required for Firestore
+            //needed for Firestore   
         }
         
         public Flashcard(String question, String answer, String userId) {
@@ -62,10 +62,10 @@ public class Task {
             this.masteryLevel = 0;
             this.correctCount = 0;
             this.incorrectCount = 0;
-            this.setName = "Default"; // Always set a default
+            this.setName = "Default"; 
         }
         
-        // OVERLOADED CONSTRUCTOR with set name
+        //overloaded for set name
         public Flashcard(String question, String answer, String userId, String setName) {
             this.id = java.util.UUID.randomUUID().toString();
             this.question = question;
@@ -78,7 +78,7 @@ public class Task {
             this.incorrectCount = 0;
         }
         
-        // FLASHCARD GETTERS AND SETTERS
+        //flashcards
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
         
@@ -114,12 +114,12 @@ public class Task {
             this.incorrectCount++;
         }
 
-        // Example mastery logic: mastered if correctCount >= 3 and incorrectCount == 0
+        //mastered if correctCount >= 3 and incorrectCount == 0
         public void updateMasteryLevel() {
             if (correctCount >= 3) {
-                this.masteryLevel = 2; // Mastered
+                this.masteryLevel = 2; //mastered
             } else {
-                this.masteryLevel = 1; // Reviewing
+                this.masteryLevel = 1; //reviewing
             }
         }
     }

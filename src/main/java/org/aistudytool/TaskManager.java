@@ -46,7 +46,7 @@ public TaskManager(String userId) {
     public void addTask(String title) {
         Task task = new Task(title, userId);
         
-        // Save to Firestore
+        //saves to Firestore
         Map<String, Object> taskData = new HashMap<>();
         taskData.put("id", task.getId());
         taskData.put("title", task.getTitle());
@@ -57,13 +57,12 @@ public TaskManager(String userId) {
         db.collection("tasks").document(task.getId()).set(taskData);
         tasks.add(task);
         
-        // Add to UI if container exists
         if (taskListContainer != null) {
             addTaskToUI(task);
         }
     }
     
-    // Add task from TextField 
+    //adds task 
     public void addTask(TextField taskInput) {
         String taskText = taskInput.getText().trim();
         if (!taskText.isEmpty()) {
@@ -72,7 +71,7 @@ public TaskManager(String userId) {
         }
     }
     
-    // Create task UI element
+    //creates task item
     private void addTaskToUI(Task task) {
         HBox taskItem = new HBox(10);
         taskItem.setAlignment(Pos.CENTER_LEFT);
@@ -107,13 +106,13 @@ public TaskManager(String userId) {
         taskListContainer.getChildren().add(taskItem);
     }
     
-    // Delete task from Firestore
+    //deletes task
     public void deleteTask(Task task) {
         db.collection("tasks").document(task.getId()).delete();
         tasks.remove(task);
     }
     
-    // Toggle task completion
+    //task completion
     public void toggleTask(Task task) {
         task.setCompleted(!task.isCompleted());
         
@@ -123,7 +122,7 @@ public TaskManager(String userId) {
         db.collection("tasks").document(task.getId()).update(updates);
     }
     
-    // Load tasks from Firestore
+    //loads tasks from Firestore
     private void loadTasks() {
         try {
             db.collection("tasks")
@@ -140,7 +139,7 @@ public TaskManager(String userId) {
         }
     }
     
-    // Load tasks into UI
+    //loads to UI
     public void loadTasksToUI() {
         if (taskListContainer != null) {
             taskListContainer.getChildren().clear();
@@ -159,7 +158,7 @@ public TaskManager(String userId) {
     }
 
      public void addFlashcard(String question, String answer) {
-    addFlashcard(question, answer, "Default"); // Use default set
+    addFlashcard(question, answer, "Default"); 
 }
 
     public void deleteFlashcard(Task.Flashcard flashcard) {
@@ -191,33 +190,33 @@ public TaskManager(String userId) {
         if (correct) {
             flashcard.setCorrectCount(flashcard.getCorrectCount() + 1);
             if (flashcard.getCorrectCount() >= 3) {
-                flashcard.setMasteryLevel(2); // Mastered
+                flashcard.setMasteryLevel(2); 
             } else {
-                flashcard.setMasteryLevel(1); // Reviewing
+                flashcard.setMasteryLevel(1); 
             }
         } else {
             flashcard.setIncorrectCount(flashcard.getIncorrectCount() + 1);
-            flashcard.setMasteryLevel(0); // Reviewing
+            flashcard.setMasteryLevel(0); 
         }
         saveFlashcard(flashcard);
     }
     
-    // Get unique set names
+    //set names
     public List<String> getFlashcardSets() {
         return flashcards.stream()
             .map(Task.Flashcard::getSetName)
-            .filter(setName -> setName != null && !setName.isEmpty()) // Add null check
+            .filter(setName -> setName != null && !setName.isEmpty()) 
             .distinct()
             .sorted()
             .collect(Collectors.toList());
     }
 
-    // Get flashcards by set
+    //get flashcard set
     public ObservableList<Task.Flashcard> getFlashcardsBySet(String setName) {
         return flashcards.filtered(fc -> fc.getSetName().equals(setName));
     }
 
-    // Add flashcard with set name
+    //adds flashcard with set name
     public void addFlashcard(String question, String answer, String setName) {
         Task.Flashcard flashcard = new Task.Flashcard(question, answer, userId, setName);
         
@@ -238,13 +237,13 @@ public TaskManager(String userId) {
         System.out.println("✓ Flashcard saved to set: " + setName);
     }
 
-    // Process uploaded file and generate flashcards using AI
+    //processes file and uploads generated flashcards
     public void processUploadedFile(File file, String setName, AIService aiService, Runnable onComplete) {
         try {
             String content = "";
             String fileName = file.getName().toLowerCase();
             
-            // Extract text based on file type
+            //file type
             if (fileName.endsWith(".txt")) {
                 content = Files.readString(file.toPath());
             } 
@@ -262,18 +261,18 @@ public TaskManager(String userId) {
                 return;
             }
             
-            // Limit content size (Claude API has token limits)
+            //limit (Claude API has token limits)
             if (content.length() > 10000) {
                 content = content.substring(0, 10000);
             }
             
-            // Create AI prompt to generate flashcards
+            //AI prompt to generate flashcards
             String prompt = "Based on this study material, generate 10 flashcards in this exact format:\n\n" +
                            "Q: [Question]\n" +
                            "A: [Answer]\n\n" +
                            "Material:\n" + content;
             
-            // Call AI to generate flashcards
+            //call AI to generate flashcards
             aiService.askQuestion(prompt, new AIService.AICallback() {
                 @Override
                 public void onSuccess(String response) {
@@ -295,7 +294,7 @@ public TaskManager(String userId) {
         }
     }
 
-    // ADD THESE HELPER METHODS
+
     private String extractTextFromPDF(File file) throws IOException {
         try (PDDocument document = PDDocument.load(file)) {
             PDFTextStripper stripper = new PDFTextStripper();
@@ -317,7 +316,7 @@ public TaskManager(String userId) {
     
         StringBuilder text = new StringBuilder();
         
-        // Extract text from each slide
+      
         ppt.getSlides().forEach(slide -> {
             slide.getShapes().forEach(shape -> {
                 if (shape instanceof org.apache.poi.xslf.usermodel.XSLFTextShape) {
@@ -335,7 +334,7 @@ public TaskManager(String userId) {
     }
 }
     
-    // Parse multiple flashcards from AI response
+    // parse multiple flashcards from AI response
     private void parseAndSaveMultipleFlashcards(String response, String setName) {
         String[] lines = response.split("\n");
         String currentQuestion = "";

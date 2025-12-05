@@ -41,3 +41,8 @@ build/
 ### Creds ###
 firebase_creds.json
 .env
+src/main/java/org/aistudytool/Config.java
+
+module-info.java
+
+session.properties

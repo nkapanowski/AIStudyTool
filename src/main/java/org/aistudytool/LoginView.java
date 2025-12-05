@@ -38,36 +38,30 @@ public class LoginView extends Application {
         Label subtitle = new Label("Sign in to continue");
         subtitle.setStyle("-fx-font-size: 14px; -fx-text-fill: #888888;");
         
-        // Email field
         TextField emailField = new TextField();
         emailField.setPromptText("Email");
         emailField.setMaxWidth(350);
         emailField.getStyleClass().add("input");
         
-        // Password field
         PasswordField passwordField = new PasswordField();
         passwordField.setPromptText("Password");
         passwordField.setMaxWidth(350);
         passwordField.getStyleClass().add("input");
         
-        // Error label
         Label errorLabel = new Label();
         errorLabel.setStyle("-fx-text-fill: #ff4444; -fx-font-size: 12px;");
         errorLabel.setVisible(false);
         
-        // Login button
         Button loginButton = new Button("Sign In");
         loginButton.setMaxWidth(350);
         loginButton.getStyleClass().add("button");
         loginButton.setOnAction(e -> handleLogin(emailField.getText(), passwordField.getText(), errorLabel));
         
-        // Register button
         Button registerButton = new Button("Create Account");
         registerButton.setMaxWidth(350);
         registerButton.getStyleClass().add("button");
         registerButton.setOnAction(e -> handleRegister(emailField.getText(), passwordField.getText(), errorLabel));
         
-         // Divider with "OR"
         HBox dividerBox = new HBox(10);
         dividerBox.setAlignment(Pos.CENTER);
         dividerBox.setMaxWidth(350);
@@ -82,7 +76,6 @@ public class LoginView extends Application {
         
         dividerBox.getChildren().addAll(leftLine, orLabel, rightLine);
         
-        // Google Sign-In button
         Button googleButton = new Button("Sign in with Google");
         googleButton.setMaxWidth(350);
         googleButton.setStyle(
@@ -94,8 +87,7 @@ public class LoginView extends Application {
             "-fx-cursor: hand;"
         );
         googleButton.setOnAction(e -> handleGoogleSignIn(errorLabel));
-        
-        // Hover effect for Google button
+    
         googleButton.setOnMouseEntered(e -> 
             googleButton.setStyle(
                 "-fx-background-color: #357ae8; " +
@@ -116,8 +108,7 @@ public class LoginView extends Application {
                 "-fx-cursor: hand;"
             )
         );
-        
-        // Enter key handling
+        //key handling
         passwordField.setOnAction(e -> handleLogin(emailField.getText(), passwordField.getText(), errorLabel));
         
         root.getChildren().addAll(
@@ -215,8 +206,8 @@ private void handleGoogleSignIn(Label errorLabel) {
     }
 
    private void openMainApp(User user) {
-        AIStudyTool.setCurrentUser(user); // Set the user statically
-        primaryStage.close(); // Close login window
+        AIStudyTool.setCurrentUser(user); //set the user
+        primaryStage.close(); //close login window
         
         try {
             AIStudyTool mainApp = new AIStudyTool();
