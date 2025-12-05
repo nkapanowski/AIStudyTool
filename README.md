@@ -7,7 +7,7 @@ their learning patterns and progress.
 # Instructions
 -Need Java 21 or higher and Maven
 -Clone Repo
--Replcae lines 21-22 in AuthService.java with the keys I gave in Teams
+-Replcae lines 21-22 in AuthService.java with the keys given
 -Add firebase_creds.json to your own code in /AI STUDY TOOL
 -RUN USING .\mvnw javafx:run
 
