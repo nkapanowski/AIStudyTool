@@ -36,7 +36,7 @@ public class AIStudyTool extends Application {
         return;
     }
     
-    // Initialize TaskManager with current user
+    // TaskManager with current user
     this.taskManager = new TaskManager(currentUser.getUid());
 
     try {
@@ -165,11 +165,11 @@ public class AIStudyTool extends Application {
         panel.setPadding(new Insets(25, 25, 25, 3));
         VBox.setVgrow(panel, Priority.ALWAYS);
 
-        // AI Chat Section (main chat)
+        //(main chat)
         VBox chatBox = createChatSection();
         VBox.setVgrow(chatBox, Priority.ALWAYS);
         
-        // Only flashcard section below
+        //only flashcard section below
         VBox flashcardSection = createFlashcardSection();
         VBox.setVgrow(flashcardSection, Priority.SOMETIMES);
 
@@ -338,12 +338,12 @@ private void parseAndSaveFlashcard(String response, String topic) {
             }
         }
 
-        // Make them final for lambda use
+       
         final String finalQuestion = question;
         final String finalAnswer = answer;
 
         if (!finalQuestion.isEmpty() && !finalAnswer.isEmpty()) {
-            // Create a custom dialog with ComboBox for set selection
+            //create dialog with ComboBox for set selection
             Dialog<String> dialog = new Dialog<>();
             dialog.setTitle("Add Flashcard to Set");
             dialog.setHeaderText("Choose an existing set or enter a new set name:");
@@ -392,7 +392,7 @@ private VBox createFlashcardSection() {
     Label title = new Label("My Flashcards");
     title.getStyleClass().add("title");
 
-    // --- SINGLE SET SELECTION DROPDOWN ---
+
     ComboBox<String> setComboBox = new ComboBox<>();
     setComboBox.getItems().addAll(taskManager.getFlashcardSets());
     setComboBox.setEditable(true);
@@ -417,7 +417,7 @@ private VBox createFlashcardSection() {
     VBox flashcardList = new VBox(15);
     flashcardList.setPadding(new Insets(10));
 
-    // Helper to refresh flashcards for selected set
+    //helper to refresh flashcards for selected set
     Runnable updateFlashcardList = () -> {
         flashcardList.getChildren().clear();
         String selectedSet = setComboBox.getValue();
@@ -432,7 +432,7 @@ private VBox createFlashcardSection() {
 
     setComboBox.setOnAction(e -> updateFlashcardList.run());
 
-    // Initial load
+    //load
     updateFlashcardList.run();
 
     ScrollPane scrollPane = new ScrollPane(flashcardList);
@@ -443,13 +443,13 @@ private VBox createFlashcardSection() {
     return section;
 }
 
-// Helper to create a flashcard card with editable set ComboBox
+//helper to create a flashcard card 
 private VBox createFlashcardCard(Task.Flashcard flashcard) {
     VBox card = new VBox(10);
     card.setPadding(new Insets(12));
     card.setStyle("-fx-background-color: #1a1a1a; -fx-background-radius: 8px; -fx-border-color: #333; -fx-border-radius: 8px; -fx-border-width: 2px;");
 
-    // Status label for mastery/review
+    //mastery/review
     Label statusLabel = new Label();
     statusLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #FFD600; -fx-font-size: 14px;");
     updateStatusLabel(statusLabel, flashcard);
@@ -463,11 +463,11 @@ private VBox createFlashcardCard(Task.Flashcard flashcard) {
     answerLabel.setWrapText(true);
     answerLabel.setVisible(false);
 
-    // "Click to reveal answer" hint with lightbulb
+    //reveal answer
     Label flipHint = new Label("\uD83D\uDCA1 Click to reveal answer");
     flipHint.setStyle("-fx-text-fill: #a4a39eff; -fx-font-size: 12px; -fx-font-style: italic;");
 
-    // Mastery/Review buttons 
+  
     Button correctBtn = new Button("✔ Got it!");
     correctBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 13px; -fx-padding: 4 16 4 16;");
     correctBtn.setOnAction(e -> {
@@ -505,7 +505,6 @@ private VBox createFlashcardCard(Task.Flashcard flashcard) {
     return card;
 }
 
-// Add this helper method to update the status label
 private void updateStatusLabel(Label label, Task.Flashcard flashcard) {
     String status = flashcard.getMasteryLevel() == 2 ? "Mastered" : "Reviewing";
     label.setText("📚 " + status + "   ✓ " + flashcard.getCorrectCount() + " | ✗ " + flashcard.getIncorrectCount());
@@ -516,7 +515,7 @@ private void refreshFlashcards() {
     root.setCenter(rightPanel);
 }
 
-// ADD THIS HELPER METHOD
+
 private String buildPrompt(String question, String mode) {
     switch (mode) {
         case "Learn":
@@ -561,7 +560,7 @@ private void saveChatHistory(String message, String mode) {
 private void loadChatHistoryForMode(String mode) {
     if (chatArea == null) return;
     
-    chatArea.clear(); // Clear before loading
+    chatArea.clear(); 
     
     try {
         com.google.cloud.firestore.Firestore db = FirebaseConfig.getFirestore();
@@ -602,7 +601,7 @@ private void showUploadDialog() {
     java.io.File file = fileChooser.showOpenDialog(primaryStage);
     
     if (file != null) {
-        // Prompt for set name
+        //prompt
         String defaultName = file.getName().replaceAll("\\.(txt|pdf|doc|docx|ppt|pptx)$", "");
         javafx.scene.control.TextInputDialog dialog = new javafx.scene.control.TextInputDialog(defaultName);
         dialog.setTitle("Create Flashcard Set");
